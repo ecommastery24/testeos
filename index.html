@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CRM de Testeos · EcomMastery VIP</title>
+<meta name="description" content="Herramienta gratis de EcomMastery VIP: cargá tus testeos de producto y calculá métricas, costos y escenarios de entrega del 50% al 100% en MXN y USD.">
+<meta property="og:title" content="CRM de Testeos · EcomMastery VIP">
+<meta property="og:description" content="Métricas, costos y escenarios de entrega para tus testeos de producto, en MXN y USD.">
+<meta property="og:image" content="logo.png">
+<link rel="icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: lista de testeos a la izquierda, ficha + escenarios a la derecha; en móvil se apila */
+:root{
+  --bg:#F4F6F4; --surface:#FFFFFF; --sunk:#EEF2EF; --ink:#14201A; --muted:#5D6B63; --line:#DCE3DE;
+  --accent:#0F6B4F; --accent-ink:#FFFFFF; --good:#1D8547; --bad:#BF3F2B; --warn:#A86E12;
+  --good-bg:#E4F3EA; --bad-bg:#FBE9E5; --warn-bg:#FAF0DC; --info-bg:#E6EEF6; --info:#2F5E8C;
+  --f-display:"Archivo",system-ui,sans-serif; --f-body:"Archivo",system-ui,sans-serif; --f-num:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E1411; --surface:#161F1B; --sunk:#111915; --ink:#E4ECE7; --muted:#92A299; --line:#26322C;
+  --accent:#4CC497; --accent-ink:#06140E; --good:#5ACF89; --bad:#F2846F; --warn:#E5B458;
+  --good-bg:#15301F; --bad-bg:#3A1B15; --warn-bg:#352812; --info-bg:#16263A; --info:#8DB6E0; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1411; --surface:#161F1B; --sunk:#111915; --ink:#E4ECE7; --muted:#92A299; --line:#26322C;
+  --accent:#4CC497; --accent-ink:#06140E; --good:#5ACF89; --bad:#F2846F; --warn:#E5B458;
+  --good-bg:#15301F; --bad-bg:#3A1B15; --warn-bg:#352812; --info-bg:#16263A; --info:#8DB6E0; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+.wrap{max-width:1320px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:18px}
+h1{font-family:var(--f-display);font-weight:800;font-size:26px;letter-spacing:-.02em;margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:2px 0 0;font-size:13px}
+.save{font-size:12px;color:var(--muted);font-family:var(--f-num)}
+.btn{font:600 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:8px 12px;cursor:pointer}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.danger{color:var(--bad)}
+.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.item:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.grid{display:grid;grid-template-columns:260px minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+aside{display:flex;flex-direction:column;gap:8px;min-width:0}
+.list{display:flex;flex-direction:column;gap:6px}
+.item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;text-align:left;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;color:var(--ink);font:inherit}
+.item.sel{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.item .n{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .m{grid-column:1/-1;display:flex;justify-content:space-between;font-family:var(--f-num);font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.chip{font:600 10.5px var(--f-body);letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:99px;white-space:nowrap;align-self:start}
+.s-test{background:var(--info-bg);color:var(--info)} .s-esc{background:var(--good-bg);color:var(--good)}
+.s-pau{background:var(--warn-bg);color:var(--warn)} .s-desc{background:var(--bad-bg);color:var(--bad)}
+main{display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);gap:18px;align-items:start;min-width:0}
+@media (max-width:1180px){main{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+.stack{display:flex;flex-direction:column;gap:18px;min-width:0}
+.sec-h{font:700 11px var(--f-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;display:flex;justify-content:space-between;gap:8px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+.fields .full{grid-column:1/-1}
+@media (max-width:420px){.fields{grid-template-columns:minmax(0,1fr)}}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);min-width:0}
+label.f span.lbl{font-weight:500}
+input,select,textarea{font:500 14px var(--f-body);color:var(--ink);background:var(--sunk);border:1px solid var(--line);border-radius:7px;padding:8px 9px;width:100%;min-width:0}
+input[type=number]{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+textarea{resize:vertical;min-height:56px}
+.eq{font-family:var(--f-num);font-size:11px;color:var(--muted);min-height:14px}
+.inline{display:flex;gap:6px}.inline select{width:auto;flex:0 0 auto}
+.toggle{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:var(--ink)}
+.toggle input{width:auto;margin-top:2px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.kpi{background:var(--surface);padding:10px 12px;min-width:0}
+.kpi .k{font-size:11px;color:var(--muted);letter-spacing:.02em}
+.kpi .v{font:600 17px var(--f-num);font-variant-numeric:tabular-nums;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .u{font:400 11px var(--f-num);color:var(--muted);white-space:nowrap}
+.kpi .v2{font:500 14px var(--f-num);font-variant-numeric:tabular-nums;color:var(--ink);opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi small{font:500 10px var(--f-body);color:var(--muted);letter-spacing:.04em}
+.kpis{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))!important}
+.be{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.be>div{flex:1 1 180px;border:1px dashed var(--line);border-radius:10px;padding:10px 12px}
+.be .k{font-size:11.5px;color:var(--muted)}
+.be .v{font:600 20px var(--f-num);margin-top:2px}
+.tblwrap{overflow-x:auto;margin:0 -4px;padding:0 4px}
+table{border-collapse:collapse;width:100%;min-width:700px;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left;color:var(--muted);font-weight:500;position:sticky;left:0;background:var(--surface)}
+thead th{font:700 13px var(--f-num);color:var(--ink);border-bottom:2px solid var(--ink)}
+thead th small{display:block;font:500 10px var(--f-body);color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+td{font:500 13px var(--f-num)}
+td .usd{display:block;font-size:10.5px;color:var(--muted);font-weight:400}
+tr.grp td{font:700 10.5px var(--f-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);text-align:left;padding-top:14px;border-bottom:none}
+tr.profit td{font-weight:700;font-size:14px}
+.pos{color:var(--good)} .neg{color:var(--bad)}
+td.cell-p{background:var(--good-bg)} td.cell-n{background:var(--bad-bg)}
+.bar{height:6px;border-radius:3px;margin-top:5px;background:var(--line);position:relative;overflow:hidden}
+.bar i{position:absolute;top:0;bottom:0;border-radius:3px}
+.note{font-size:12px;color:var(--muted);margin:10px 0 0;max-width:70ch}
+.empty{padding:40px 20px;text-align:center;color:var(--muted)}
+.empty h2{font-family:var(--f-display);color:var(--ink);font-size:20px;margin:0 0 6px}
+.confirm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;background:var(--bad-bg);color:var(--bad);border-radius:8px;padding:8px 10px}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.ex{font:600 10px var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--warn)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:10px;text-decoration:none;color:var(--ink)}
+.brand img{height:36px;width:auto;max-width:180px;object-fit:contain}
+.brand .wm{font:800 15px var(--f-display);letter-spacing:.02em}
+.brand .wm b{color:var(--accent)}
+footer.foot{margin-top:32px;padding-top:16px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px 20px;justify-content:space-between;color:var(--muted);font-size:12.5px}
+footer.foot a{color:var(--accent);font-weight:600;text-decoration:none}
+.intro{font-size:13px;color:var(--muted);margin:6px 0 0;max-width:72ch}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <a class="brand" href="https://ecommasteryvip.com" target="_blank" rel="noopener">
+        <img src="logo.png" alt="EcomMastery VIP" onerror="this.remove();document.getElementById('wm').hidden=false">
+        <span class="wm" id="wm" hidden>EcomMastery <b>VIP</b></span>
+      </a>
+      <h1>CRM de Testeos</h1>
+      <p class="sub">Métricas, costos y escenarios de entrega en pesos mexicanos y dólares.</p>
+      <p class="intro">Tus datos se guardan solo en este navegador: nadie más los ve. Descargá un respaldo de vez en cuando para no perderlos si cambiás de equipo.</p>
+    </div>
+    <div class="actions" style="align-items:center">
+      <span class="save" id="saveState"></span>
+      <button class="btn" id="btnXls" type="button">Descargar Excel</button>
+      <button class="btn" id="btnBackup" type="button">Guardar respaldo</button>
+      <button class="btn" id="btnRestore" type="button">Cargar respaldo</button>
+      <input type="file" id="fileRestore" accept=".json,application/json" hidden>
+      <button class="btn primary" id="btnNew" type="button">+ Nuevo testeo</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <aside>
+      <div class="sec-h"><span>Testeos</span><span id="count"></span></div>
+      <div class="list" id="list"></div>
+    </aside>
+
+    <div id="detail" style="min-width:0"></div>
+  </div>
+
+  <footer class="foot">
+    <span>Herramienta gratis de <a href="https://ecommasteryvip.com" target="_blank" rel="noopener">EcomMastery VIP</a> · por Claudio Daniel</span>
+    <span>Los cálculos son estimaciones: revisá siempre tus números reales.</span>
+  </footer>
+</div>
+
+<template id="tplDetail">
+<main>
+  <div class="stack">
+    <section class="panel">
+      <div class="sec-h"><span>Producto</span><span class="ex" id="exTag" hidden>Ejemplo</span></div>
+      <div class="fields">
+        <label class="f full"><span class="lbl">Nombre del producto</span><input id="f-name" data-k="name" type="text"></label>
+        <label class="f"><span class="lbl">Fecha de inicio</span><input id="f-date" data-k="date" type="date"></label>
+        <label class="f"><span class="lbl">Estado</span>
+          <select id="f-status" data-k="status">
+            <option value="test">En testeo</option><option value="esc">Escalar</option>
+            <option value="pau">Pausado</option><option value="desc">Descartado</option>
+          </select></label>
+        <label class="f"><span class="lbl">Tipo de cambio (MXN por 1 USD)</span><input id="f-fx" data-k="fx" type="number" step="0.01" min="0"></label>
+        <label class="f"><span class="lbl">Días de testeo</span><input id="f-days" data-k="days" type="number" step="1" min="0"></label>
+        <label class="f full"><span class="lbl">Notas (ángulo, creativo, proveedor)</span><textarea id="f-notes" data-k="notes"></textarea></label>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="sec-h"><span>Costos por pedido</span><span>MXN salvo indicado</span></div>
+      <div class="fields">
+        <label class="f"><span class="lbl">Precio de venta</span><input id="f-price" data-k="price" data-m type="number" step="1" min="0"><span class="eq" data-eq="price"></span></label>
+        <label class="f"><span class="lbl">Costo del producto</span><input id="f-cost" data-k="cost" data-m type="number" step="1" min="0"><span class="eq" data-eq="cost"></span></label>
+        <label class="f"><span class="lbl">Flete de envío</span><input id="f-ship" data-k="ship" data-m type="number" step="1" min="0"><span class="eq" data-eq="ship"></span></label>
+        <label class="f"><span class="lbl">Flete de devolución</span><input id="f-ret" data-k="ret" data-m type="number" step="1" min="0"><span class="eq" data-eq="ret"></span></label>
+        <label class="f"><span class="lbl">Comisión COD (USD por entregado)</span><input id="f-codUsd" data-k="codUsd" type="number" step="0.01" min="0"><span class="eq" data-equsd="codUsd"></span></label>
+        <label class="f"><span class="lbl">Comisión plataforma (USD por resultado)</span><input id="f-platUsd" data-k="platUsd" type="number" step="0.01" min="0"><span class="eq" data-equsd="platUsd"></span></label>
+        <label class="f full"><span class="lbl">Costos administrativos por resultado (confirmaciones, call center, etc.) · MXN</span><input id="f-other" data-k="other" data-m type="number" step="1" min="0"><span class="eq" data-eq="other"></span></label>
+        <label class="toggle full"><input id="f-recover" data-k="recover" type="checkbox"><span>El producto devuelto vuelve a stock (solo pago costo de producto por pedido entregado)</span></label>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="sec-h"><span>Publicidad y embudo</span></div>
+      <div class="fields">
+        <label class="f full"><span class="lbl">Gasto en ads (total del testeo)</span>
+          <span class="inline"><input id="f-ads" data-k="ads" type="number" step="0.01" min="0"><select id="f-adsCur" data-k="adsCur"><option value="USD">USD</option><option value="MXN">MXN</option></select></span>
+          <span class="eq" id="adsEq"></span></label>
+        <label class="f"><span class="lbl">Impresiones</span><input id="f-impr" data-k="impr" type="number" step="1" min="0"></label>
+        <label class="f"><span class="lbl">Clics en el enlace</span><input id="f-clicks" data-k="clicks" type="number" step="1" min="0"></label>
+        <label class="f"><span class="lbl">Visitas a la landing</span><input id="f-visits" data-k="visits" type="number" step="1" min="0"></label>
+        <label class="f"><span class="lbl">Resultados</span><input id="f-orders" data-k="orders" type="number" step="1" min="0"></label>
+        <label class="f"><span class="lbl">Valor medio del pedido · MXN</span><input id="f-aov" data-k="aov" data-m type="number" step="1" min="0" placeholder="Usa el precio de venta"><span class="eq" data-eq="aov"></span></label>
+        <label class="f"><span class="lbl">Ventas totales · MXN</span><input id="f-sales" data-k="sales" data-m type="number" step="1" min="0" placeholder="Valor medio × resultados"><span class="eq" data-eq="sales"></span></label>
+      </div>
+    </section>
+
+    <div class="actions" id="actions">
+      <button class="btn" id="btnDup" type="button">Duplicar testeo</button>
+      <button class="btn danger" id="btnDel" type="button">Eliminar</button>
+    </div>
+  </div>
+
+  <div class="stack">
+    <section class="panel">
+      <div class="sec-h"><span>Métricas del testeo</span></div>
+      <div class="kpis" id="kpis"></div>
+      <div class="be" id="be"></div>
+    </section>
+    <section class="panel">
+      <div class="sec-h"><span>Escenarios de entrega</span><span>MXN · USD</span></div>
+      <div class="tblwrap"><table id="scen"></table></div>
+      <p class="note">El flete de envío se paga en todos los pedidos despachados; el de devolución, en cada pedido no entregado. La facturación usa el valor medio del pedido (si está vacío, ventas totales ÷ resultados; si no, el precio de venta). La comisión COD se cobra por pedido entregado; la de plataforma y los costos administrativos, por cada resultado.</p>
+    </section>
+  </div>
+</main>
+</template>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function(){
+const PCTS=[50,60,70,80,90,100];
+const STATUS={test:"En testeo",esc:"Escalar",pau:"Pausado",desc:"Descartado"};
+const LS="crm-testeos-v1";
+const $=s=>document.querySelector(s);
+const st={tests:new Map(),sel:null,db:null,mode:"loading",dirty:new Set(),inflight:new Map(),timers:new Map(),confirmDel:false};
+
+const fmtMX=new Intl.NumberFormat("es-MX",{style:"currency",currency:"MXN",maximumFractionDigits:0});
+const fmtUS=new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2});
+const fmtN=new Intl.NumberFormat("es-MX",{maximumFractionDigits:0});
+const n=v=>{const x=parseFloat(v);return isFinite(x)?x:0};
+const mx=v=>isFinite(v)?fmtMX.format(v):"—";
+const us=(v,fx)=>isFinite(v)&&fx>0?fmtUS.format(v/fx):"—";
+const pct=(v,d=1)=>isFinite(v)?(v*100).toFixed(d)+"%":"—";
+const div=(a,b)=>b>0?a/b:NaN;
+const today=()=>new Date().toISOString().slice(0,10);
+
+function blank(){return{name:"Nuevo producto",date:today(),status:"test",fx:19,days:3,notes:"",price:0,cost:0,ship:0,ret:0,codUsd:1.5,platUsd:1,other:0,recover:true,ads:0,adsCur:"USD",impr:0,clicks:0,visits:0,atc:0,chk:0,orders:0,example:false,updatedAt:Date.now()}}
+
+function calc(t){
+  const fx=n(t.fx), orders=n(t.orders), price=n(t.price), cost=n(t.cost), ship=n(t.ship), ret=n(t.ret), codMX=n(t.codUsd)*fx, platMX=n(t.platUsd)*fx, other=n(t.other);
+  const adsMX=t.adsCur==="MXN"?n(t.ads):n(t.ads)*fx;
+  const aov=n(t.aov)>0?n(t.aov):(n(t.sales)>0&&orders>0?n(t.sales)/orders:price);
+  const sales=n(t.sales)>0?n(t.sales):aov*orders;
+  const m={fx,adsMX,orders,aov,sales,roasB:div(sales,adsMX),
+    cpm:div(adsMX,n(t.impr))*1000, ctr:div(n(t.clicks),n(t.impr)), cpc:div(adsMX,n(t.clicks)),
+    cr:div(orders,n(t.visits)),
+    cpa:div(adsMX,orders), ordersDay:div(orders,n(t.days)), adsDay:div(adsMX,n(t.days))};
+  m.scen=PCTS.map(p=>{
+    const r=p/100, del=orders*r, no=orders-del;
+    const rev=del*aov, prod=(t.recover?del:orders)*cost, shp=orders*ship, rt=no*ret, cm=del*codMX, pl=orders*platMX, ot=orders*other;
+    const tot=prod+shp+rt+cm+pl+ot+adsMX, profit=rev-tot;
+    return{p,del,no,rev,prod,shp,rt,cm,pl,ot,ads:adsMX,tot,profit,margin:div(profit,rev),roas:div(rev,adsMX),cpaDel:div(adsMX,del),perDel:div(profit,del)};
+  });
+  // Entrega mínima para no perder
+  const slope=orders*(aov-codMX-(t.recover?cost:0)+ret);
+  const fixed=orders*ship+orders*ret+orders*other+orders*platMX+(t.recover?0:orders*cost)+adsMX;
+  m.beP=slope>0?fixed/slope:NaN;
+  // CPA máximo por pedido al 80% de entrega
+  const r=.8; m.beCpa=r*(aov-codMX)-(t.recover?r:1)*cost-ship-(1-r)*ret-other-platMX;
+  return m;
+}
+
+/* ---------- Persistencia ---------- */
+function setSave(txt){$("#saveState").textContent=txt}
+function lsLoad(){try{const o=JSON.parse(localStorage.getItem(LS)||"{}");Object.entries(o).forEach(([k,v])=>st.tests.set(k,v))}catch(e){}}
+function lsSave(){try{localStorage.setItem(LS,JSON.stringify(Object.fromEntries(st.tests)))}catch(e){}}
+function newId(){return "t"+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+
+function schedule(id){
+  st.dirty.add(id); setSave("Guardando…");
+  clearTimeout(st.timers.get(id));
+  st.timers.set(id,setTimeout(()=>flush(id),700));
+}
+async function flush(id){
+  if(st.mode!=="db"){lsSave();st.dirty.delete(id);setSave("Guardado en este navegador");return}
+  if(st.inflight.get(id)){st.timers.set(id,setTimeout(()=>flush(id),400));return}
+  const t=st.tests.get(id); if(!t){st.dirty.delete(id);return}
+  st.inflight.set(id,true); st.dirty.delete(id);
+  try{await st.db.collection("tests").doc(id).set({...t,updatedAt:Date.now()});setSave(st.dirty.size?"Guardando…":"Guardado")}
+  catch(e){st.dirty.add(id);setSave(e&&e.code==="quota_exceeded"?"Sin espacio: eliminá testeos viejos":"No se pudo guardar. Reintentá editando un campo.")}
+  finally{st.inflight.set(id,false)}
+}
+async function removeTest(id){
+  st.tests.delete(id);
+  if(st.mode==="db"){try{await st.db.collection("tests").doc(id).delete()}catch(e){setSave("No se pudo eliminar")}}
+  else lsSave();
+}
+
+/* ---------- Render lista ---------- */
+function sorted(){return [...st.tests.entries()].sort((a,b)=>(b[1].date||"").localeCompare(a[1].date||"")||n(b[1].updatedAt)-n(a[1].updatedAt))}
+function renderList(){
+  const L=$("#list"); L.innerHTML="";
+  const rows=sorted(); $("#count").textContent=rows.length||"";
+  if(!rows.length){L.innerHTML='<div class="note">Sin testeos todavía.</div>';return}
+  rows.forEach(([id,t])=>{
+    const m=calc(t), s80=m.scen.find(s=>s.p===80);
+    const b=document.createElement("button"); b.type="button"; b.className="item"+(id===st.sel?" sel":"");
+    b.innerHTML='<span class="n"></span><span class="chip s-'+t.status+'">'+STATUS[t.status]+'</span><span class="m"><span>'+(t.date||"")+' · '+fmtN.format(n(t.orders))+' res.</span><span class="'+(s80.profit>=0?"pos":"neg")+'">80%: '+mx(s80.profit)+'</span></span>';
+    b.querySelector(".n").textContent=(t.example?"Ejemplo · ":"")+(t.name||"Sin nombre");
+    b.onclick=()=>{st.sel=id;st.confirmDel=false;renderAll(true)};
+    L.appendChild(b);
+  });
+}
+
+/* ---------- Render ficha ---------- */
+function mountDetail(){
+  const D=$("#detail"); D.innerHTML="";
+  const t=st.tests.get(st.sel);
+  if(!t){
+    D.innerHTML='<div class="panel empty"><h2>'+(st.mode==="loading"?"Cargando testeos…":"Todavía no hay testeos")+'</h2><p>'+(st.mode==="loading"?"":"Creá el primero con “Nuevo testeo” y cargá costos, gasto en ads y pedidos para ver los escenarios de entrega del 60% al 100%.")+'</p></div>';
+    return;
+  }
+  D.appendChild($("#tplDetail").content.cloneNode(true));
+  fillForm(t);
+  D.querySelectorAll("[data-k]").forEach(el=>{
+    const ev=el.type==="checkbox"||el.tagName==="SELECT"?"change":"input";
+    el.addEventListener(ev,()=>{
+      const cur=st.tests.get(st.sel); if(!cur)return;
+      const k=el.dataset.k;
+      cur[k]=el.type==="checkbox"?el.checked:(el.type==="number"?(el.value===""?"":parseFloat(el.value)):el.value);
+      if(cur.example&&k!=="status")cur.example=false;
+      schedule(st.sel); renderNumbers(); renderList();
+    });
+  });
+  $("#btnDup").onclick=()=>{const c={...st.tests.get(st.sel),name:(st.tests.get(st.sel).name||"")+" (copia)",date:today(),example:false,updatedAt:Date.now()};const id=newId();st.tests.set(id,c);st.sel=id;schedule(id);renderAll(true)};
+  $("#btnDel").onclick=()=>{st.confirmDel=true;renderConfirm()};
+  renderConfirm(); renderNumbers();
+}
+function fillForm(t){
+  document.querySelectorAll("#detail [data-k]").forEach(el=>{
+    const v=t[el.dataset.k];
+    if(el.type==="checkbox")el.checked=!!v; else el.value=v==null?"":v;
+  });
+  const ex=$("#exTag"); if(ex)ex.hidden=!t.example;
+}
+function renderConfirm(){
+  const A=$("#actions"); if(!A)return;
+  const old=A.querySelector(".confirm"); if(old)old.remove();
+  $("#btnDel").hidden=st.confirmDel;
+  if(st.confirmDel){
+    const c=document.createElement("div"); c.className="confirm";
+    c.innerHTML='<span>¿Eliminar este testeo? No se puede deshacer.</span>';
+    const y=document.createElement("button");y.className="btn danger";y.type="button";y.textContent="Sí, eliminar";
+    const no=document.createElement("button");no.className="btn";no.type="button";no.textContent="Cancelar";
+    y.onclick=async()=>{const id=st.sel;st.confirmDel=false;await removeTest(id);st.sel=(sorted()[0]||[])[0]||null;renderAll(true)};
+    no.onclick=()=>{st.confirmDel=false;renderConfirm()};
+    c.append(y,no); A.appendChild(c);
+  }
+}
+function renderNumbers(){
+  const t=st.tests.get(st.sel); if(!t||!$("#kpis"))return;
+  const m=calc(t), fx=m.fx;
+  document.querySelectorAll("#detail [data-eq]").forEach(e=>{e.textContent="≈ "+us(n(t[e.dataset.eq]),fx)});
+  document.querySelectorAll("#detail [data-equsd]").forEach(e=>{e.textContent="≈ "+mx(n(t[e.dataset.equsd])*fx)});
+  $("#adsEq").textContent=t.adsCur==="MXN"?"≈ "+us(m.adsMX,fx):"≈ "+mx(m.adsMX);
+  const money=(k,v)=>'<div class="kpi"><div class="k">'+k+'</div><div class="v">'+mx(v)+' <small>MXN</small></div><div class="v2">'+us(v,fx)+' <small>USD</small></div></div>';
+  const plain=(k,v,u)=>'<div class="kpi"><div class="k">'+k+'</div><div class="v">'+v+'</div><div class="u">'+(u||"&nbsp;")+'</div></div>';
+  $("#kpis").innerHTML=[
+    money("Ventas totales",m.sales),
+    money("Valor medio del pedido",m.aov),
+    plain("ROAS bruto",isFinite(m.roasB)?m.roasB.toFixed(2)+"x":"—","ventas / gasto en ads"),
+    money("Gasto en ads",m.adsMX),
+    money("Gasto por día",m.adsDay),
+    money("CPA (por resultado)",m.cpa),
+    money("CPM",m.cpm),
+    money("CPC",m.cpc),
+    plain("CTR",pct(m.ctr,2),"clics / impresiones"),
+    plain("Resultados / día",isFinite(m.ordersDay)?m.ordersDay.toFixed(1):"—",""),
+    plain("Conversión",pct(m.cr,2),"resultados / visitas"),
+  ].join("");
+  const beTxt=isFinite(m.beP)?(m.beP>1?"No alcanza ni al 100%":pct(m.beP)):"—";
+  const beCls=isFinite(m.beP)?(m.beP<=.7?"pos":m.beP>1?"neg":""):"";
+  $("#be").innerHTML=
+    '<div><div class="k">Entrega mínima para no perder</div><div class="v '+beCls+'">'+beTxt+'</div></div>'+
+    '<div><div class="k">CPA máximo para empatar (al 80% de entrega)</div><div class="v">'+mx(m.beCpa)+'</div><div class="eq">'+us(m.beCpa,fx)+' USD · tu CPA: '+mx(m.cpa)+' MXN / '+us(m.cpa,fx)+' USD</div></div>';
+  const S=m.scen, maxAbs=Math.max(1,...S.map(s=>Math.abs(s.profit)));
+  const cell=(v,cls="")=>'<td class="'+cls+'">'+mx(v)+'<span class="usd">'+us(v,fx)+'</span></td>';
+  const row=(lbl,f,cls)=>'<tr class="'+(cls||"")+'"><td>'+lbl+'</td>'+S.map(f).join("")+'</tr>';
+  let h='<thead><tr><th>Entrega</th>'+S.map(s=>'<th>'+s.p+'%<small>'+fmtN.format(s.del)+' entregados</small></th>').join("")+'</tr></thead><tbody>';
+  h+='<tr class="grp"><td colspan="7">Resultados</td></tr>';
+  h+=row("Entregados",s=>'<td>'+s.del.toFixed(1)+'</td>');
+  h+=row("Devueltos",s=>'<td>'+s.no.toFixed(1)+'</td>');
+  h+='<tr class="grp"><td colspan="7">Ingresos</td></tr>';
+  h+=row("Facturación cobrada",s=>cell(s.rev));
+  h+='<tr class="grp"><td colspan="7">Costos</td></tr>';
+  h+=row("Producto",s=>cell(s.prod));
+  h+=row("Fletes de envío",s=>cell(s.shp));
+  h+=row("Fletes de devolución",s=>cell(s.rt));
+  h+=row("Comisión COD",s=>cell(s.cm));
+  h+=row("Comisión plataforma",s=>cell(s.pl));
+  h+=row("Administrativos",s=>cell(s.ot));
+  h+=row("Publicidad",s=>cell(s.ads));
+  h+=row("Costo total",s=>cell(s.tot));
+  h+='<tr class="grp"><td colspan="7">Resultado</td></tr>';
+  h+='<tr class="profit"><td>Utilidad neta</td>'+S.map(s=>{const c=s.profit>=0?"pos":"neg";const w=Math.abs(s.profit)/maxAbs*100;return '<td class="'+(s.profit>=0?"cell-p":"cell-n")+'"><span class="'+c+'">'+mx(s.profit)+'</span><span class="usd">'+us(s.profit,fx)+'</span><div class="bar"><i style="left:0;width:'+w.toFixed(1)+'%;background:var(--'+(s.profit>=0?"good":"bad")+')"></i></div></td>'}).join("")+'</tr>';
+  h+=row("Margen neto",s=>'<td class="'+(s.margin>=0?"pos":"neg")+'">'+pct(s.margin)+'</td>');
+  h+=row("ROAS real",s=>'<td>'+(isFinite(s.roas)?s.roas.toFixed(2)+"x":"—")+'</td>');
+  h+=row("CPA por entregado",s=>cell(s.cpaDel));
+  h+=row("Utilidad por entregado",s=>cell(s.perDel,s.perDel>=0?"pos":"neg"));
+  $("#scen").innerHTML=h+'</tbody>';
+}
+function renderAll(remount){renderList(); if(remount)mountDetail(); else renderNumbers()}
+
+/* ---------- Exportar a Excel ---------- */
+const r2=v=>isFinite(v)?Math.round(v*100)/100:"";
+const p1=v=>isFinite(v)?Math.round(v*1000)/10:"";
+function buildXlsx(){
+  const rows=sorted(), A=[], B=[];
+  rows.forEach(([id,t])=>{
+    const m=calc(t), fx=m.fx, u=v=>fx>0?r2(v/fx):"";
+    A.push({"Producto":t.name||"","Fecha":t.date||"","Estado":STATUS[t.status]||"","Días":n(t.days),"Tipo de cambio":fx,"Notas":t.notes||"",
+      "Precio venta MXN":n(t.price),"Costo producto MXN":n(t.cost),"Flete envío MXN":n(t.ship),"Flete devolución MXN":n(t.ret),
+      "Comisión COD USD":n(t.codUsd),"Comisión plataforma USD":n(t.platUsd),"Administrativos MXN":n(t.other),"Producto vuelve a stock":t.recover?"Sí":"No",
+      "Gasto ads MXN":r2(m.adsMX),"Gasto ads USD":u(m.adsMX),"Impresiones":n(t.impr),"Clics":n(t.clicks),"Visitas":n(t.visits),"Resultados":n(t.orders),
+      "Valor medio MXN":r2(m.aov),"Valor medio USD":u(m.aov),"Ventas totales MXN":r2(m.sales),"Ventas totales USD":u(m.sales),"ROAS bruto":r2(m.roasB),
+      "CPA MXN":r2(m.cpa),"CPA USD":u(m.cpa),"CPM MXN":r2(m.cpm),"CPM USD":u(m.cpm),"CPC MXN":r2(m.cpc),"CPC USD":u(m.cpc),
+      "CTR %":isFinite(m.ctr)?Math.round(m.ctr*10000)/100:"","Conversión %":isFinite(m.cr)?Math.round(m.cr*10000)/100:"","Entrega mínima %":p1(m.beP),"CPA máx. 80% MXN":r2(m.beCpa),"CPA máx. 80% USD":u(m.beCpa)});
+    m.scen.forEach(s=>B.push({"Producto":t.name||"","Fecha":t.date||"","Entrega %":s.p,"Entregados":r2(s.del),"Devueltos":r2(s.no),
+      "Facturación MXN":r2(s.rev),"Facturación USD":u(s.rev),"Producto MXN":r2(s.prod),"Fletes envío MXN":r2(s.shp),"Fletes devolución MXN":r2(s.rt),
+      "Comisión COD MXN":r2(s.cm),"Comisión plataforma MXN":r2(s.pl),"Administrativos MXN":r2(s.ot),"Publicidad MXN":r2(s.ads),
+      "Costo total MXN":r2(s.tot),"Costo total USD":u(s.tot),"Utilidad MXN":r2(s.profit),"Utilidad USD":u(s.profit),"Margen %":p1(s.margin),
+      "ROAS real":r2(s.roas),"CPA entregado MXN":r2(s.cpaDel),"CPA entregado USD":u(s.cpaDel)}));
+  });
+  const wb=XLSX.utils.book_new();
+  const add=(data,name)=>{const ws=XLSX.utils.json_to_sheet(data);ws["!cols"]=Object.keys(data[0]||{}).map(k=>({wch:Math.max(10,k.length+2)}));XLSX.utils.book_append_sheet(wb,ws,name)};
+  add(A,"Testeos"); add(B,"Escenarios");
+  return XLSX.write(wb,{type:"array",bookType:"xlsx"});
+}
+function saveBlob(blob,name){const u=URL.createObjectURL(blob);const a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}
+$("#btnXls").onclick=()=>{
+  if(!st.tests.size){setSave("No hay testeos para descargar");return}
+  if(typeof XLSX==="undefined"){setSave("No se pudo cargar el generador de Excel. Revisá tu conexión.");return}
+  saveBlob(new Blob([buildXlsx()],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),"testeos-"+today()+".xlsx");setSave("Excel descargado");
+};
+$("#btnBackup").onclick=()=>{
+  saveBlob(new Blob([JSON.stringify({app:"crm-testeos-ecommastery",version:1,tests:Object.fromEntries(st.tests)},null,2)],{type:"application/json"}),"respaldo-testeos-"+today()+".json");setSave("Respaldo descargado");
+};
+$("#btnRestore").onclick=()=>$("#fileRestore").click();
+$("#fileRestore").onchange=async e=>{
+  const f=e.target.files[0]; e.target.value=""; if(!f)return;
+  try{const o=JSON.parse(await f.text()); const t=o&&o.tests; if(!t||typeof t!=="object")throw 0;
+    let k=0; Object.entries(t).forEach(([id,v])=>{if(v&&typeof v==="object"){st.tests.set(id,v);k++}});
+    lsSave(); st.sel=(sorted()[0]||[])[0]||null; renderAll(true); setSave(k+" testeos cargados del respaldo");
+  }catch(err){setSave("Ese archivo no es un respaldo válido del CRM")}
+};
+
+/* ---------- Inicio ---------- */
+$("#btnNew").onclick=()=>{const id=newId();st.tests.set(id,blank());st.sel=id;schedule(id);renderAll(true);const f=$("#f-name");if(f){f.focus();f.select()}};
+
+renderAll(true);
+
+st.mode="local"; lsLoad();
+if(!st.tests.size){st.tests.set("ejemplo",{name:"Producto de ejemplo",date:today(),status:"test",fx:19,days:3,notes:"Ficha de ejemplo: editala con tu testeo real o eliminala.",price:699,cost:150,ship:180,ret:0,codUsd:1.5,platUsd:1,other:15,recover:true,ads:150,adsCur:"USD",impr:42000,clicks:980,visits:820,orders:32,aov:850,sales:"",example:true,updatedAt:Date.now()});lsSave()}
+st.sel=(sorted()[0]||[])[0]||null; setSave("Se guarda en este navegador"); renderAll(true);
+})();
+</script>
+</body>
+</html>
