@@ -100,9 +100,13 @@ td.cell-p{background:var(--good-bg)} td.cell-n{background:var(--bad-bg)}
 .actions{display:flex;flex-wrap:wrap;gap:8px}
 .ex{font:600 10px var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--warn)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
-.brand{display:flex;align-items:center;gap:10px;margin-bottom:10px;text-decoration:none;color:var(--ink)}
-.brand img{height:36px;width:auto;max-width:180px;object-fit:contain}
-.brand .wm{font:800 15px var(--f-display);letter-spacing:.02em}
+.hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding-block:8px 22px;margin-bottom:18px;border-bottom:1px solid var(--line)}
+.brand{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:var(--ink)}
+.brand img{height:72px;width:auto;max-width:min(360px,100%);object-fit:contain}
+.brand .wm{font:800 30px var(--f-display);letter-spacing:.02em}
+.join{margin:0;font-size:14px;color:var(--muted);max-width:60ch;text-wrap:balance}
+.join a{color:var(--accent);font-weight:700;text-decoration:none;white-space:nowrap}
+.join a:hover{text-decoration:underline}
 .brand .wm b{color:var(--accent)}
 footer.foot{margin-top:32px;padding-top:16px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px 20px;justify-content:space-between;color:var(--muted);font-size:12.5px}
 footer.foot a{color:var(--accent);font-weight:600;text-decoration:none}
@@ -112,12 +116,15 @@ footer.foot a{color:var(--accent);font-weight:600;text-decoration:none}
 <body>
 
 <div class="wrap">
+  <div class="hero">
+    <a class="brand" href="https://ecommasteryvip.com" target="_blank" rel="noopener">
+      <img src="logo.png" alt="EcomMastery VIP" onerror="this.remove();document.getElementById('wm').hidden=false">
+      <span class="wm" id="wm" hidden>EcomMastery <b>VIP</b></span>
+    </a>
+    <p class="join">Esta herramienta es un regalo de la comunidad EcomMastery VIP. Sumate y aprendé a testear y escalar productos con operadores reales: <a href="https://www.skool.com/ecommastery-vip" target="_blank" rel="noopener">unite a la comunidad en Skool →</a></p>
+  </div>
   <header class="top">
     <div>
-      <a class="brand" href="https://ecommasteryvip.com" target="_blank" rel="noopener">
-        <img src="logo.png" alt="EcomMastery VIP" onerror="this.remove();document.getElementById('wm').hidden=false">
-        <span class="wm" id="wm" hidden>EcomMastery <b>VIP</b></span>
-      </a>
       <h1>CRM de Testeos</h1>
       <p class="sub">Métricas, costos y escenarios de entrega en pesos mexicanos y dólares.</p>
       <p class="intro">Tus datos se guardan solo en este navegador: nadie más los ve. Descargá un respaldo de vez en cuando para no perderlos si cambiás de equipo.</p>
@@ -196,6 +203,7 @@ footer.foot a{color:var(--accent);font-weight:600;text-decoration:none}
     </section>
 
     <div class="actions" id="actions">
+      <button class="btn primary" id="btnPdf" type="button">Descargar PDF</button>
       <button class="btn" id="btnDup" type="button">Duplicar testeo</button>
       <button class="btn danger" id="btnDel" type="button">Eliminar</button>
     </div>
@@ -217,6 +225,8 @@ footer.foot a{color:var(--accent);font-weight:600;text-decoration:none}
 </template>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script>
 (function(){
 const PCTS=[50,60,70,80,90,100];
@@ -325,6 +335,7 @@ function mountDetail(){
   });
   $("#btnDup").onclick=()=>{const c={...st.tests.get(st.sel),name:(st.tests.get(st.sel).name||"")+" (copia)",date:today(),example:false,updatedAt:Date.now()};const id=newId();st.tests.set(id,c);st.sel=id;schedule(id);renderAll(true)};
   $("#btnDel").onclick=()=>{st.confirmDel=true;renderConfirm()};
+  $("#btnPdf").onclick=()=>downloadPdf();
   renderConfirm(); renderNumbers();
 }
 function fillForm(t){
@@ -444,6 +455,83 @@ $("#fileRestore").onchange=async e=>{
     lsSave(); st.sel=(sorted()[0]||[])[0]||null; renderAll(true); setSave(k+" testeos cargados del respaldo");
   }catch(err){setSave("Ese archivo no es un respaldo válido del CRM")}
 };
+
+/* ---------- Reporte PDF ---------- */
+const LOGO_SRC="logo.png";
+function logoData(){
+  if(!LOGO_SRC)return Promise.resolve(null);
+  return new Promise(res=>{const i=new Image();
+    i.onload=()=>{try{const c=document.createElement("canvas");c.width=i.naturalWidth;c.height=i.naturalHeight;c.getContext("2d").drawImage(i,0,0);res({d:c.toDataURL("image/png"),w:i.naturalWidth,h:i.naturalHeight})}catch(e){res(null)}};
+    i.onerror=()=>res(null); i.src=LOGO_SRC;});
+}
+async function buildPdf(t){
+  const doc=new window.jspdf.jsPDF({orientation:"landscape",unit:"pt",format:"a4"});
+  const m=calc(t), fx=m.fx, W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight(), M=36;
+  const G=[15,107,79], GOOD=[29,133,71], BAD=[191,63,43];
+  const U=v=>us(v,fx), two=v=>mx(v)+"\n"+us(v,fx);
+  let y=M;
+  const lg=await logoData();
+  if(lg){const h=30,w=Math.min(160,lg.w*h/lg.h);doc.addImage(lg.d,"PNG",M,y,w,h)}
+  else{doc.setFont("helvetica","bold");doc.setFontSize(14);doc.setTextColor(...G);doc.text("EcomMastery VIP",M,y+20)}
+  doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(110);
+  doc.text("CRM de Testeos  ·  Reporte del "+today(),W-M,y+12,{align:"right"});
+  doc.setDrawColor(...G);doc.setLineWidth(1.2);doc.line(M,y+40,W-M,y+40);
+  y+=64;
+  doc.setTextColor(20);doc.setFont("helvetica","bold");doc.setFontSize(20);doc.text(t.name||"Sin nombre",M,y);
+  y+=17;doc.setFont("helvetica","normal");doc.setFontSize(10);doc.setTextColor(90);
+  doc.text(["Inicio: "+(t.date||"-"),"Estado: "+(STATUS[t.status]||"-"),"Días de testeo: "+n(t.days),"Tipo de cambio: 1 USD = "+fx+" MXN"].join("     ·     "),M,y);
+  if(t.notes){y+=14;const L=doc.splitTextToSize("Notas: "+t.notes,W-2*M);doc.text(L,M,y);y+=(L.length-1)*12}
+  y+=14;
+  const base={font:"helvetica",fontSize:9,cellPadding:4,textColor:30,lineColor:[220,226,222],lineWidth:.5};
+  const head={fillColor:G,textColor:255,fontStyle:"bold"};
+  const cw=(W-2*M-20)/2, R={1:{halign:"right"},2:{halign:"right"}};
+  const c=v=>[mx(v),U(v)];
+  doc.autoTable({startY:y,margin:{left:M},tableWidth:cw,theme:"grid",styles:base,headStyles:head,columnStyles:R,
+    head:[["Costos por pedido","MXN","USD"]],
+    body:[["Precio de venta",...c(n(t.price))],["Valor medio del pedido",...c(m.aov)],["Costo del producto",...c(n(t.cost))],
+      ["Flete de envío",...c(n(t.ship))],["Flete de devolución",...c(n(t.ret))],["Comisión COD (por entregado)",...c(n(t.codUsd)*fx)],
+      ["Comisión plataforma (por resultado)",...c(n(t.platUsd)*fx)],["Administrativos (por resultado)",...c(n(t.other))],
+      ["Producto devuelto vuelve a stock",t.recover?"Sí":"No",""]]});
+  const yL=doc.lastAutoTable.finalY;
+  doc.autoTable({startY:y,margin:{left:M+cw+20},tableWidth:cw,theme:"grid",styles:base,headStyles:head,columnStyles:R,
+    head:[["Métricas del testeo","MXN","USD"]],
+    body:[["Gasto en ads",...c(m.adsMX)],["Ventas totales",...c(m.sales)],["CPA (por resultado)",...c(m.cpa)],["CPM",...c(m.cpm)],["CPC",...c(m.cpc)],
+      ["CTR",pct(m.ctr,2),""],["Conversión (resultados / visitas)",pct(m.cr,2),""],["ROAS bruto",isFinite(m.roasB)?m.roasB.toFixed(2)+"x":"—",""],
+      ["Impresiones / clics / visitas",fmtN.format(n(t.impr))+" / "+fmtN.format(n(t.clicks))+" / "+fmtN.format(n(t.visits)),""],
+      ["Resultados",fmtN.format(n(t.orders))+(isFinite(m.ordersDay)?"  ("+m.ordersDay.toFixed(1)+" por día)":""),""]]});
+  y=Math.max(yL,doc.lastAutoTable.finalY)+20;
+  const beTxt=isFinite(m.beP)?(m.beP>1?"no alcanza ni al 100%":pct(m.beP)):"—";
+  doc.setFont("helvetica","bold");doc.setFontSize(10.5);doc.setTextColor(20);
+  doc.text("Entrega mínima para no perder: "+beTxt+"          CPA máximo para empatar (80% de entrega): "+mx(m.beCpa)+" MXN / "+U(m.beCpa)+" USD",M,y);
+  y+=10;
+  const S=m.scen;
+  const row=(l,f)=>[l,...S.map(f)];
+  const body=[row("Entregados",s=>s.del.toFixed(1)),row("Devueltos",s=>s.no.toFixed(1)),row("Facturación cobrada",s=>two(s.rev)),
+    row("Producto",s=>two(s.prod)),row("Fletes de envío",s=>two(s.shp)),row("Fletes de devolución",s=>two(s.rt)),row("Comisión COD",s=>two(s.cm)),
+    row("Comisión plataforma",s=>two(s.pl)),row("Administrativos",s=>two(s.ot)),row("Publicidad",s=>two(s.ads)),row("Costo total",s=>two(s.tot)),
+    row("Utilidad neta",s=>two(s.profit)),row("Margen neto",s=>pct(s.margin)),row("ROAS real",s=>isFinite(s.roas)?s.roas.toFixed(2)+"x":"—"),
+    row("CPA por entregado",s=>two(s.cpaDel)),row("Utilidad por entregado",s=>two(s.perDel))];
+  doc.autoTable({startY:y+6,margin:{left:M,right:M,bottom:40},theme:"grid",styles:{...base,fontSize:8.5,cellPadding:3,halign:"right"},
+    headStyles:{...head,halign:"right"},columnStyles:{0:{halign:"left",fontStyle:"bold",cellWidth:140}},
+    head:[["Escenarios de entrega (MXN / USD)",...S.map(s=>s.p+"%")]],body,
+    didParseCell:d=>{
+      if(d.column.index===0){d.cell.styles.halign="left";return}
+      if(d.section!=="body")return;
+      const l=d.row.raw[0], s=S[d.column.index-1];
+      if(l==="Utilidad neta"||l==="Margen neto"||l==="Utilidad por entregado"){const ok=(l==="Utilidad por entregado"?s.perDel:s.profit)>=0;d.cell.styles.textColor=ok?GOOD:BAD;d.cell.styles.fontStyle="bold";if(l==="Utilidad neta")d.cell.styles.fillColor=ok?[228,243,234]:[251,233,229]}
+    }});
+  const pages=doc.getNumberOfPages();
+  for(let i=1;i<=pages;i++){doc.setPage(i);doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(120);
+    doc.text("Generado con el CRM de Testeos de EcomMastery VIP  ·  ecommasteryvip.com",M,H-20);
+    doc.text("Página "+i+" de "+pages,W-M,H-20,{align:"right"})}
+  return doc;
+}
+function pdfName(t){return "testeo-"+((t.name||"producto").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"producto")+"-"+today()+".pdf"}
+async function downloadPdf(){
+  const t=st.tests.get(st.sel); if(!t)return;
+  if(!window.jspdf){setSave("No se pudo cargar el generador de PDF. Revisá tu conexión.");return}
+  try{const doc=await buildPdf(t);doc.save(pdfName(t));setSave("PDF descargado")}catch(e){setSave("No se pudo generar el PDF")}
+}
 
 /* ---------- Inicio ---------- */
 $("#btnNew").onclick=()=>{const id=newId();st.tests.set(id,blank());st.sel=id;schedule(id);renderAll(true);const f=$("#f-name");if(f){f.focus();f.select()}};
