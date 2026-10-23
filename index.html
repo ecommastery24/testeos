@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>CRM de Testeos · EcomMastery VIP</title>
-<meta name="description" content="Herramienta gratis de EcomMastery VIP: cargá tus testeos de producto y calculá métricas, costos y escenarios de entrega del 50% al 100% en MXN y USD.">
+<meta name="description" content="Herramienta gratis de EcomMastery VIP: cargá tus testeos de producto y calculá métricas, costos y escenarios de entrega del 50% al 100% en tu moneda local y en USD.">
 <meta property="og:title" content="CRM de Testeos · EcomMastery VIP">
-<meta property="og:description" content="Métricas, costos y escenarios de entrega para tus testeos de producto, en MXN y USD.">
+<meta property="og:description" content="Métricas, costos y escenarios de entrega para tus testeos de producto, en tu moneda local y en USD.">
 <meta property="og:image" content="logo.png">
 <link rel="icon" href="logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -93,6 +93,7 @@ tr.profit td{font-weight:700;font-size:14px}
 td.cell-p{background:var(--good-bg)} td.cell-n{background:var(--bad-bg)}
 .bar{height:6px;border-radius:3px;margin-top:5px;background:var(--line);position:relative;overflow:hidden}
 .bar i{position:absolute;top:0;bottom:0;border-radius:3px}
+.wrapline{flex-wrap:wrap}.wrapline select{max-width:100%}.wrapline input{flex:1 1 120px}
 .shipbox{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 18px;margin-bottom:14px;padding:12px;border-radius:10px;background:var(--sunk);border:1px solid var(--line)}
 .shipbox .f{flex:0 1 300px}
 .shipbox input{max-width:110px;font-size:16px;font-weight:600}
@@ -132,7 +133,7 @@ footer.foot a{color:var(--accent);font-weight:600;text-decoration:none}
   <header class="top">
     <div>
       <h1>CRM de Testeos</h1>
-      <p class="sub">Métricas, costos y escenarios de entrega en pesos mexicanos y dólares.</p>
+      <p class="sub">Métricas, costos y escenarios de entrega en tu moneda local y en dólares.</p>
       <p class="intro">Tus datos se guardan solo en este navegador: nadie más los ve. Descargá un respaldo de vez en cuando para no perderlos si cambiás de equipo.</p>
     </div>
     <div class="actions" style="align-items:center">
@@ -173,22 +174,26 @@ footer.foot a{color:var(--accent);font-weight:600;text-decoration:none}
             <option value="test">En testeo</option><option value="esc">Escalar</option>
             <option value="pau">Pausado</option><option value="desc">Descartado</option>
           </select></label>
-        <label class="f"><span class="lbl">Tipo de cambio (MXN por 1 USD)</span><input id="f-fx" data-k="fx" type="number" step="0.01" min="0"></label>
+        <label class="f"><span class="lbl">Moneda local</span><select id="f-cur" data-k="cur" data-def="MXN"><option value="MXN">MXN · Peso mexicano</option><option value="COP">COP · Peso colombiano</option><option value="ARS">ARS · Peso argentino</option><option value="CLP">CLP · Peso chileno</option><option value="PEN">PEN · Sol peruano</option><option value="GTQ">GTQ · Quetzal guatemalteco</option><option value="CRC">CRC · Colón costarricense</option><option value="DOP">DOP · Peso dominicano</option><option value="UYU">UYU · Peso uruguayo</option><option value="PYG">PYG · Guaraní paraguayo</option><option value="BOB">BOB · Boliviano</option><option value="HNL">HNL · Lempira hondureño</option><option value="EUR">EUR · Euro</option><option value="USD">USD · Dólar estadounidense</option></select></label>
+        <label class="f"><span class="lbl">Tipo de cambio (<span class="curc">MXN</span> por 1 USD)</span><input id="f-fx" data-k="fx" type="number" step="0.01" min="0"></label>
         <label class="f"><span class="lbl">Días de testeo</span><input id="f-days" data-k="days" type="number" step="1" min="0"></label>
         <label class="f full"><span class="lbl">Notas (ángulo, creativo, proveedor)</span><textarea id="f-notes" data-k="notes"></textarea></label>
       </div>
     </section>
 
     <section class="panel">
-      <div class="sec-h"><span>Costos por pedido</span><span>MXN salvo indicado</span></div>
+      <div class="sec-h"><span>Costos por pedido</span><span><span class="curc">MXN</span> salvo indicado</span></div>
       <div class="fields">
         <label class="f"><span class="lbl">Precio de venta</span><input id="f-price" data-k="price" data-m type="number" step="1" min="0"><span class="eq" data-eq="price"></span></label>
         <label class="f"><span class="lbl">Costo del producto</span><input id="f-cost" data-k="cost" data-m type="number" step="1" min="0"><span class="eq" data-eq="cost"></span></label>
         <label class="f"><span class="lbl">Flete de envío</span><input id="f-ship" data-k="ship" data-m type="number" step="1" min="0"><span class="eq" data-eq="ship"></span></label>
         <label class="f"><span class="lbl">Flete de devolución</span><input id="f-ret" data-k="ret" data-m type="number" step="1" min="0"><span class="eq" data-eq="ret"></span></label>
+        <label class="f full"><span class="lbl">Costo de rehusado (por pedido enviado que no se entrega)</span>
+          <span class="inline wrapline"><select id="f-rehMode" data-k="rehMode" data-def="none"><option value="none">No aplica</option><option value="auto">Automático: flete de envío + comisión plataforma</option><option value="manual">Monto manual</option></select><input id="f-rehAmt" data-k="rehAmt" type="number" step="1" min="0" placeholder="Monto en moneda local"></span>
+          <span class="eq" id="rehEq"></span></label>
         <label class="f"><span class="lbl">Comisión COD (USD por entregado)</span><input id="f-codUsd" data-k="codUsd" type="number" step="0.01" min="0"><span class="eq" data-equsd="codUsd"></span></label>
         <label class="f"><span class="lbl">Comisión plataforma (USD por resultado)</span><input id="f-platUsd" data-k="platUsd" type="number" step="0.01" min="0"><span class="eq" data-equsd="platUsd"></span></label>
-        <label class="f full"><span class="lbl">Costos administrativos por resultado (confirmaciones, call center, etc.) · MXN</span><input id="f-other" data-k="other" data-m type="number" step="1" min="0"><span class="eq" data-eq="other"></span></label>
+        <label class="f full"><span class="lbl">Costos administrativos por resultado (confirmaciones, call center, etc.) · <span class="curc">MXN</span></span><input id="f-other" data-k="other" data-m type="number" step="1" min="0"><span class="eq" data-eq="other"></span></label>
         <label class="toggle full"><input id="f-recover" data-k="recover" type="checkbox"><span>El producto devuelto vuelve a stock (solo pago costo de producto por pedido entregado)</span></label>
       </div>
     </section>
@@ -197,14 +202,14 @@ footer.foot a{color:var(--accent);font-weight:600;text-decoration:none}
       <div class="sec-h"><span>Publicidad y embudo</span></div>
       <div class="fields">
         <label class="f full"><span class="lbl">Gasto en ads (total del testeo)</span>
-          <span class="inline"><input id="f-ads" data-k="ads" type="number" step="0.01" min="0"><select id="f-adsCur" data-k="adsCur"><option value="USD">USD</option><option value="MXN">MXN</option></select></span>
+          <span class="inline"><input id="f-ads" data-k="ads" type="number" step="0.01" min="0"><select id="f-adsCur" data-k="adsCur"><option value="USD">USD</option><option value="MXN" id="optLocal">MXN</option></select></span>
           <span class="eq" id="adsEq"></span></label>
         <label class="f"><span class="lbl">Impresiones</span><input id="f-impr" data-k="impr" type="number" step="1" min="0"></label>
         <label class="f"><span class="lbl">Clics en el enlace</span><input id="f-clicks" data-k="clicks" type="number" step="1" min="0"></label>
         <label class="f"><span class="lbl">Visitas a la landing</span><input id="f-visits" data-k="visits" type="number" step="1" min="0"></label>
         <label class="f"><span class="lbl">Resultados</span><input id="f-orders" data-k="orders" type="number" step="1" min="0"></label>
-        <label class="f"><span class="lbl">Valor medio del pedido · MXN</span><input id="f-aov" data-k="aov" data-m type="number" step="1" min="0" placeholder="Usa el precio de venta"><span class="eq" data-eq="aov"></span></label>
-        <label class="f"><span class="lbl">Ventas totales · MXN</span><input id="f-sales" data-k="sales" data-m type="number" step="1" min="0" placeholder="Valor medio × resultados"><span class="eq" data-eq="sales"></span></label>
+        <label class="f"><span class="lbl">Valor medio del pedido · <span class="curc">MXN</span></span><input id="f-aov" data-k="aov" data-m type="number" step="1" min="0" placeholder="Usa el precio de venta"><span class="eq" data-eq="aov"></span></label>
+        <label class="f"><span class="lbl">Ventas totales · <span class="curc">MXN</span></span><input id="f-sales" data-k="sales" data-m type="number" step="1" min="0" placeholder="Valor medio × resultados"><span class="eq" data-eq="sales"></span></label>
       </div>
     </section>
 
@@ -222,14 +227,14 @@ footer.foot a{color:var(--accent);font-weight:600;text-decoration:none}
       <div class="be" id="be"></div>
     </section>
     <section class="panel">
-      <div class="sec-h"><span>Escenarios de entrega</span><span>MXN · USD</span></div>
+      <div class="sec-h"><span>Escenarios de entrega</span><span><span class="curc">MXN</span> · USD</span></div>
       <div class="shipbox">
         <label class="f"><span class="lbl">% de envío (resultados que se confirman y despachan)</span>
           <span class="inline"><input id="f-shipPct" data-k="shipPct" type="number" step="1" min="0" max="100" placeholder="100"><span class="pctsign">%</span></span></label>
         <div class="shipinfo" id="shipInfo"></div>
       </div>
       <div class="tblwrap"><table id="scen"></table></div>
-      <p class="note">Los porcentajes de entrega se calculan sobre los pedidos enviados, no sobre todos los resultados. El flete de envío y el costo del producto se pagan solo en los pedidos despachados; el de devolución, en cada pedido no entregado. La facturación usa el valor medio del pedido (si está vacío, ventas totales ÷ resultados; si no, el precio de venta). La comisión COD se cobra por pedido entregado; la de plataforma y los costos administrativos, por cada resultado.</p>
+      <p class="note">El costo de rehusado se suma en cada pedido enviado que no se entrega (no en los que no se envían). Los porcentajes de entrega se calculan sobre los pedidos enviados, no sobre todos los resultados. El flete de envío y el costo del producto se pagan solo en los pedidos despachados; el de devolución, en cada pedido no entregado. La facturación usa el valor medio del pedido (si está vacío, ventas totales ÷ resultados; si no, el precio de venta). La comisión COD se cobra por pedido entregado; la de plataforma y los costos administrativos, por cada resultado.</p>
     </section>
   </div>
 </main>
@@ -246,40 +251,47 @@ const LS="crm-testeos-v1";
 const $=s=>document.querySelector(s);
 const st={tests:new Map(),sel:null,db:null,mode:"loading",dirty:new Set(),inflight:new Map(),timers:new Map(),confirmDel:false};
 
-const fmtMX=new Intl.NumberFormat("es-MX",{style:"currency",currency:"MXN",maximumFractionDigits:0});
+let CUR="MXN"; const FMT={};
+function fmtCur(c){if(FMT[c])return FMT[c];const d=(c==="EUR"||c==="USD")?2:0;
+  try{FMT[c]=new Intl.NumberFormat("es-419",{style:"currency",currency:c,currencyDisplay:"narrowSymbol",maximumFractionDigits:d,minimumFractionDigits:0})}
+  catch(e){FMT[c]=new Intl.NumberFormat("es-419",{style:"currency",currency:c,maximumFractionDigits:d})}
+  return FMT[c]}
 const fmtUS=new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2});
 const fmtN=new Intl.NumberFormat("es-MX",{maximumFractionDigits:0});
 const n=v=>{const x=parseFloat(v);return isFinite(x)?x:0};
-const mx=v=>isFinite(v)?fmtMX.format(v):"—";
+let PLAIN=false;
+const mx=v=>!isFinite(v)?"—":PLAIN?new Intl.NumberFormat("es-419",{maximumFractionDigits:(CUR==="EUR"||CUR==="USD")?2:0}).format(v):fmtCur(CUR).format(v);
 const us=(v,fx)=>isFinite(v)&&fx>0?fmtUS.format(v/fx):"—";
 const pct=(v,d=1)=>isFinite(v)?(v*100).toFixed(d)+"%":"—";
 const div=(a,b)=>b>0?a/b:NaN;
 const today=()=>new Date().toISOString().slice(0,10);
 
-function blank(){return{name:"Nuevo producto",date:today(),status:"test",fx:19,days:3,notes:"",price:0,cost:0,ship:0,ret:0,codUsd:1.5,platUsd:1,other:0,shipPct:"",recover:true,ads:0,adsCur:"USD",impr:0,clicks:0,visits:0,atc:0,chk:0,orders:0,example:false,updatedAt:Date.now()}}
+function blank(){return{name:"Nuevo producto",date:today(),status:"test",cur:"MXN",rehMode:"none",rehAmt:"",fx:19,days:3,notes:"",price:0,cost:0,ship:0,ret:0,codUsd:1.5,platUsd:1,other:0,shipPct:"",recover:true,ads:0,adsCur:"USD",impr:0,clicks:0,visits:0,atc:0,chk:0,orders:0,example:false,updatedAt:Date.now()}}
 
 function calc(t){
-  const fx=n(t.fx), orders=n(t.orders), price=n(t.price), cost=n(t.cost), ship=n(t.ship), ret=n(t.ret), codMX=n(t.codUsd)*fx, platMX=n(t.platUsd)*fx, other=n(t.other);
+  CUR=t.cur||"MXN";
+  const fx=CUR==="USD"?1:n(t.fx), orders=n(t.orders), price=n(t.price), cost=n(t.cost), ship=n(t.ship), ret=n(t.ret), codMX=n(t.codUsd)*fx, platMX=n(t.platUsd)*fx, other=n(t.other);
   const adsMX=t.adsCur==="MXN"?n(t.ads):n(t.ads)*fx;
+  const reh=t.rehMode==="auto"?ship+platMX:t.rehMode==="manual"?n(t.rehAmt):0;
   const aov=n(t.aov)>0?n(t.aov):(n(t.sales)>0&&orders>0?n(t.sales)/orders:price);
   const sales=n(t.sales)>0?n(t.sales):aov*orders;
   const e=(t.shipPct===""||t.shipPct==null)?1:Math.min(1,Math.max(0,n(t.shipPct)/100)), sent=orders*e;
-  const m={fx,adsMX,orders,e,sent,cpaSent:div(adsMX,sent),aov,sales,roasB:div(sales,adsMX),
+  const m={fx,adsMX,orders,e,sent,reh,cpaSent:div(adsMX,sent),aov,sales,roasB:div(sales,adsMX),
     cpm:div(adsMX,n(t.impr))*1000, ctr:div(n(t.clicks),n(t.impr)), cpc:div(adsMX,n(t.clicks)),
     cr:div(orders,n(t.visits)),
     cpa:div(adsMX,orders), ordersDay:div(orders,n(t.days)), adsDay:div(adsMX,n(t.days))};
   m.scen=PCTS.map(p=>{
     const r=p/100, del=sent*r, no=sent-del;
-    const rev=del*aov, prod=(t.recover?del:sent)*cost, shp=sent*ship, rt=no*ret, cm=del*codMX, pl=orders*platMX, ot=orders*other;
-    const tot=prod+shp+rt+cm+pl+ot+adsMX, profit=rev-tot;
-    return{p,sent,del,no,rev,prod,shp,rt,cm,pl,ot,ads:adsMX,tot,profit,margin:div(profit,rev),roas:div(rev,adsMX),cpaDel:div(adsMX,del),perDel:div(profit,del)};
+    const rev=del*aov, prod=(t.recover?del:sent)*cost, shp=sent*ship, rt=no*ret, cm=del*codMX, pl=orders*platMX, ot=orders*other, rh=no*reh;
+    const tot=prod+shp+rt+rh+cm+pl+ot+adsMX, profit=rev-tot;
+    return{p,sent,del,no,rev,prod,shp,rt,rh,cm,pl,ot,ads:adsMX,tot,profit,margin:div(profit,rev),roas:div(rev,adsMX),cpaDel:div(adsMX,del),perDel:div(profit,del)};
   });
   // Entrega mínima para no perder
-  const slope=sent*(aov-codMX-(t.recover?cost:0)+ret);
-  const fixed=sent*ship+sent*ret+orders*other+orders*platMX+(t.recover?0:sent*cost)+adsMX;
+  const slope=sent*(aov-codMX-(t.recover?cost:0)+ret+reh);
+  const fixed=sent*ship+sent*ret+sent*reh+orders*other+orders*platMX+(t.recover?0:sent*cost)+adsMX;
   m.beP=slope>0?fixed/slope:NaN;
   // CPA máximo por pedido al 80% de entrega
-  const r=.8; m.beCpa=e*(r*(aov-codMX)-(t.recover?r:1)*cost-ship-(1-r)*ret)-other-platMX;
+  const r=.8; m.beCpa=e*(r*(aov-codMX)-(t.recover?r:1)*cost-ship-(1-r)*ret-(1-r)*reh)-other-platMX;
   return m;
 }
 
@@ -353,7 +365,7 @@ function mountDetail(){
 function fillForm(t){
   document.querySelectorAll("#detail [data-k]").forEach(el=>{
     const v=t[el.dataset.k];
-    if(el.type==="checkbox")el.checked=!!v; else el.value=v==null?"":v;
+    if(el.type==="checkbox")el.checked=!!v; else el.value=(v==null||v==="")?(el.dataset.def||""):v;
   });
   const ex=$("#exTag"); if(ex)ex.hidden=!t.example;
 }
@@ -374,11 +386,16 @@ function renderConfirm(){
 function renderNumbers(){
   const t=st.tests.get(st.sel); if(!t||!$("#kpis"))return;
   const m=calc(t), fx=m.fx;
+  document.querySelectorAll("#detail .curc").forEach(e=>{e.textContent=CUR});
+  const ol=$("#optLocal"); if(ol)ol.textContent=CUR;
+  const fxIn=$("#f-fx"); if(fxIn){fxIn.disabled=CUR==="USD"; if(CUR==="USD")fxIn.value=1}
+  const ra=$("#f-rehAmt"); if(ra)ra.hidden=t.rehMode!=="manual";
+  const re=$("#rehEq"); if(re)re.textContent=m.reh>0?"≈ "+mx(m.reh)+" / "+us(m.reh,fx)+" por pedido no entregado":(t.rehMode==="auto"?"Cargá flete de envío y comisión de plataforma":"");
   document.querySelectorAll("#detail [data-eq]").forEach(e=>{e.textContent="≈ "+us(n(t[e.dataset.eq]),fx)});
   document.querySelectorAll("#detail [data-equsd]").forEach(e=>{e.textContent="≈ "+mx(n(t[e.dataset.equsd])*fx)});
   $("#shipInfo").innerHTML=fmtN.format(n(t.orders))+' resultados → <b>'+m.sent.toFixed(1)+' enviados</b>'+((t.shipPct===""||t.shipPct==null)?' <span style="color:var(--muted)">(sin dato: se toma 100%)</span>':'');
   $("#adsEq").textContent=t.adsCur==="MXN"?"≈ "+us(m.adsMX,fx):"≈ "+mx(m.adsMX);
-  const money=(k,v)=>'<div class="kpi"><div class="k">'+k+'</div><div class="v">'+mx(v)+' <small>MXN</small></div><div class="v2">'+us(v,fx)+' <small>USD</small></div></div>';
+  const money=(k,v)=>'<div class="kpi"><div class="k">'+k+'</div><div class="v">'+mx(v)+' <small>'+CUR+'</small></div><div class="v2">'+us(v,fx)+' <small>USD</small></div></div>';
   const plain=(k,v,u)=>'<div class="kpi"><div class="k">'+k+'</div><div class="v">'+v+'</div><div class="u">'+(u||"&nbsp;")+'</div></div>';
   $("#kpis").innerHTML=[
     money("Ventas totales",m.sales),
@@ -399,7 +416,7 @@ function renderNumbers(){
   const beCls=isFinite(m.beP)?(m.beP<=.7?"pos":m.beP>1?"neg":""):"";
   $("#be").innerHTML=
     '<div><div class="k">Entrega mínima para no perder</div><div class="v '+beCls+'">'+beTxt+'</div></div>'+
-    '<div><div class="k">CPA máximo para empatar (al 80% de entrega)</div><div class="v">'+mx(m.beCpa)+'</div><div class="eq">'+us(m.beCpa,fx)+' USD · tu CPA: '+mx(m.cpa)+' MXN / '+us(m.cpa,fx)+' USD</div></div>';
+    '<div><div class="k">CPA máximo para empatar (al 80% de entrega)</div><div class="v">'+mx(m.beCpa)+'</div><div class="eq">'+us(m.beCpa,fx)+' USD · tu CPA: '+mx(m.cpa)+' '+CUR+' / '+us(m.cpa,fx)+' USD</div></div>';
   const S=m.scen, maxAbs=Math.max(1,...S.map(s=>Math.abs(s.profit)));
   const cell=(v,cls="")=>'<td class="'+cls+'">'+mx(v)+'<span class="usd">'+us(v,fx)+'</span></td>';
   const row=(lbl,f,cls)=>'<tr class="'+(cls||"")+'"><td>'+lbl+'</td>'+S.map(f).join("")+'</tr>';
@@ -415,6 +432,7 @@ function renderNumbers(){
   h+=row("Producto",s=>cell(s.prod));
   h+=row("Fletes de envío",s=>cell(s.shp));
   h+=row("Fletes de devolución",s=>cell(s.rt));
+  if(m.reh>0)h+=row("Rehusados",s=>cell(s.rh));
   h+=row("Comisión COD",s=>cell(s.cm));
   h+=row("Comisión plataforma",s=>cell(s.pl));
   h+=row("Administrativos",s=>cell(s.ot));
@@ -437,18 +455,18 @@ function buildXlsx(){
   const rows=sorted(), A=[], B=[];
   rows.forEach(([id,t])=>{
     const m=calc(t), fx=m.fx, u=v=>fx>0?r2(v/fx):"";
-    A.push({"Producto":t.name||"","Fecha":t.date||"","Estado":STATUS[t.status]||"","Días":n(t.days),"Tipo de cambio":fx,"Notas":t.notes||"",
-      "Precio venta MXN":n(t.price),"Costo producto MXN":n(t.cost),"Flete envío MXN":n(t.ship),"Flete devolución MXN":n(t.ret),
-      "Comisión COD USD":n(t.codUsd),"Comisión plataforma USD":n(t.platUsd),"Administrativos MXN":n(t.other),"Producto vuelve a stock":t.recover?"Sí":"No",
-      "Gasto ads MXN":r2(m.adsMX),"Gasto ads USD":u(m.adsMX),"Impresiones":n(t.impr),"Clics":n(t.clicks),"Visitas":n(t.visits),"Resultados":n(t.orders),"% envío":Math.round(m.e*100),"Enviados":r2(m.sent),"CPA enviado MXN":r2(m.cpaSent),"CPA enviado USD":u(m.cpaSent),
-      "Valor medio MXN":r2(m.aov),"Valor medio USD":u(m.aov),"Ventas totales MXN":r2(m.sales),"Ventas totales USD":u(m.sales),"ROAS bruto":r2(m.roasB),
-      "CPA MXN":r2(m.cpa),"CPA USD":u(m.cpa),"CPM MXN":r2(m.cpm),"CPM USD":u(m.cpm),"CPC MXN":r2(m.cpc),"CPC USD":u(m.cpc),
-      "CTR %":isFinite(m.ctr)?Math.round(m.ctr*10000)/100:"","Conversión %":isFinite(m.cr)?Math.round(m.cr*10000)/100:"","Entrega mínima %":p1(m.beP),"CPA máx. 80% MXN":r2(m.beCpa),"CPA máx. 80% USD":u(m.beCpa)});
+    A.push({"Producto":t.name||"","Fecha":t.date||"","Estado":STATUS[t.status]||"","Moneda":CUR,"Días":n(t.days),"Tipo de cambio":fx,"Notas":t.notes||"",
+      "Precio venta local":n(t.price),"Costo producto local":n(t.cost),"Flete envío local":n(t.ship),"Flete devolución local":n(t.ret),"Rehusado local":r2(m.reh),
+      "Comisión COD USD":n(t.codUsd),"Comisión plataforma USD":n(t.platUsd),"Administrativos local":n(t.other),"Producto vuelve a stock":t.recover?"Sí":"No",
+      "Gasto ads local":r2(m.adsMX),"Gasto ads USD":u(m.adsMX),"Impresiones":n(t.impr),"Clics":n(t.clicks),"Visitas":n(t.visits),"Resultados":n(t.orders),"% envío":Math.round(m.e*100),"Enviados":r2(m.sent),"CPA enviado local":r2(m.cpaSent),"CPA enviado USD":u(m.cpaSent),
+      "Valor medio local":r2(m.aov),"Valor medio USD":u(m.aov),"Ventas totales local":r2(m.sales),"Ventas totales USD":u(m.sales),"ROAS bruto":r2(m.roasB),
+      "CPA local":r2(m.cpa),"CPA USD":u(m.cpa),"CPM local":r2(m.cpm),"CPM USD":u(m.cpm),"CPC local":r2(m.cpc),"CPC USD":u(m.cpc),
+      "CTR %":isFinite(m.ctr)?Math.round(m.ctr*10000)/100:"","Conversión %":isFinite(m.cr)?Math.round(m.cr*10000)/100:"","Entrega mínima %":p1(m.beP),"CPA máx. 80% local":r2(m.beCpa),"CPA máx. 80% USD":u(m.beCpa)});
     m.scen.forEach(s=>B.push({"Producto":t.name||"","Fecha":t.date||"","% envío":Math.round(m.e*100),"Enviados":r2(s.sent),"Entrega %":s.p,"Entregados":r2(s.del),"Devueltos":r2(s.no),
-      "Facturación MXN":r2(s.rev),"Facturación USD":u(s.rev),"Producto MXN":r2(s.prod),"Fletes envío MXN":r2(s.shp),"Fletes devolución MXN":r2(s.rt),
-      "Comisión COD MXN":r2(s.cm),"Comisión plataforma MXN":r2(s.pl),"Administrativos MXN":r2(s.ot),"Publicidad MXN":r2(s.ads),
-      "Costo total MXN":r2(s.tot),"Costo total USD":u(s.tot),"Utilidad MXN":r2(s.profit),"Utilidad USD":u(s.profit),"Margen %":p1(s.margin),
-      "ROAS real":r2(s.roas),"CPA entregado MXN":r2(s.cpaDel),"CPA entregado USD":u(s.cpaDel)}));
+      "Facturación local":r2(s.rev),"Facturación USD":u(s.rev),"Producto local":r2(s.prod),"Fletes envío local":r2(s.shp),"Fletes devolución local":r2(s.rt),"Rehusados local":r2(s.rh),"Moneda":CUR,
+      "Comisión COD local":r2(s.cm),"Comisión plataforma local":r2(s.pl),"Administrativos local":r2(s.ot),"Publicidad local":r2(s.ads),
+      "Costo total local":r2(s.tot),"Costo total USD":u(s.tot),"Utilidad local":r2(s.profit),"Utilidad USD":u(s.profit),"Margen %":p1(s.margin),
+      "ROAS real":r2(s.roas),"CPA entregado local":r2(s.cpaDel),"CPA entregado USD":u(s.cpaDel)}));
   });
   const wb=XLSX.utils.book_new();
   const add=(data,name)=>{const ws=XLSX.utils.json_to_sheet(data);ws["!cols"]=Object.keys(data[0]||{}).map(k=>({wch:Math.max(10,k.length+2)}));XLSX.utils.book_append_sheet(wb,ws,name)};
@@ -496,7 +514,7 @@ async function buildPdf(t){
   y+=64;
   doc.setTextColor(20);doc.setFont("helvetica","bold");doc.setFontSize(20);doc.text(t.name||"Sin nombre",M,y);
   y+=17;doc.setFont("helvetica","normal");doc.setFontSize(10);doc.setTextColor(90);
-  doc.text(["Inicio: "+(t.date||"-"),"Estado: "+(STATUS[t.status]||"-"),"Días de testeo: "+n(t.days),"% de envío: "+pct(m.e,0),"Tipo de cambio: 1 USD = "+fx+" MXN"].join("     ·     "),M,y);
+  doc.text(["Inicio: "+(t.date||"-"),"Estado: "+(STATUS[t.status]||"-"),"Días de testeo: "+n(t.days),"% de envío: "+pct(m.e,0),"Tipo de cambio: 1 USD = "+fx+" "+CUR].join("     ·     "),M,y);
   if(t.notes){y+=14;const L=doc.splitTextToSize("Notas: "+t.notes,W-2*M);doc.text(L,M,y);y+=(L.length-1)*12}
   y+=14;
   const base={font:"helvetica",fontSize:9,cellPadding:4,textColor:30,lineColor:[220,226,222],lineWidth:.5};
@@ -504,14 +522,14 @@ async function buildPdf(t){
   const cw=(W-2*M-20)/2, R={1:{halign:"right"},2:{halign:"right"}};
   const c=v=>[mx(v),U(v)];
   doc.autoTable({startY:y,margin:{left:M},tableWidth:cw,theme:"grid",styles:base,headStyles:head,columnStyles:R,
-    head:[["Costos por pedido","MXN","USD"]],
+    head:[["Costos por pedido",CUR,"USD"]],
     body:[["Precio de venta",...c(n(t.price))],["Valor medio del pedido",...c(m.aov)],["Costo del producto",...c(n(t.cost))],
-      ["Flete de envío",...c(n(t.ship))],["Flete de devolución",...c(n(t.ret))],["Comisión COD (por entregado)",...c(n(t.codUsd)*fx)],
+      ["Flete de envío",...c(n(t.ship))],["Flete de devolución",...c(n(t.ret))],["Rehusado (por no entregado)",...c(m.reh)],["Comisión COD (por entregado)",...c(n(t.codUsd)*fx)],
       ["Comisión plataforma (por resultado)",...c(n(t.platUsd)*fx)],["Administrativos (por resultado)",...c(n(t.other))],
       ["Producto devuelto vuelve a stock",t.recover?"Sí":"No",""]]});
   const yL=doc.lastAutoTable.finalY;
   doc.autoTable({startY:y,margin:{left:M+cw+20},tableWidth:cw,theme:"grid",styles:base,headStyles:head,columnStyles:R,
-    head:[["Métricas del testeo","MXN","USD"]],
+    head:[["Métricas del testeo",CUR,"USD"]],
     body:[["Gasto en ads",...c(m.adsMX)],["Ventas totales",...c(m.sales)],["CPA (por resultado)",...c(m.cpa)],["CPM",...c(m.cpm)],["CPC",...c(m.cpc)],
       ["CTR",pct(m.ctr,2),""],["Conversión (resultados / visitas)",pct(m.cr,2),""],["ROAS bruto",isFinite(m.roasB)?m.roasB.toFixed(2)+"x":"—",""],
       ["Impresiones / clics / visitas",fmtN.format(n(t.impr))+" / "+fmtN.format(n(t.clicks))+" / "+fmtN.format(n(t.visits)),""],
@@ -519,18 +537,18 @@ async function buildPdf(t){
   y=Math.max(yL,doc.lastAutoTable.finalY)+20;
   const beTxt=isFinite(m.beP)?(m.beP>1?"no alcanza ni al 100%":pct(m.beP)):"—";
   doc.setFont("helvetica","bold");doc.setFontSize(10.5);doc.setTextColor(20);
-  doc.text("Entrega mínima para no perder: "+beTxt+"          CPA máximo para empatar (80% de entrega): "+mx(m.beCpa)+" MXN / "+U(m.beCpa)+" USD",M,y);
+  doc.text("Entrega mínima para no perder: "+beTxt+"          CPA máximo para empatar (80% de entrega): "+mx(m.beCpa)+" "+CUR+" / "+U(m.beCpa)+" USD",M,y);
   y+=10;
   const S=m.scen;
   const row=(l,f)=>[l,...S.map(f)];
   const body=[row("Resultados",s=>fmtN.format(n(t.orders))),row("Enviados ("+pct(m.e,0)+")",s=>s.sent.toFixed(1)),row("Entregados",s=>s.del.toFixed(1)),row("Devueltos",s=>s.no.toFixed(1)),row("Facturación cobrada",s=>two(s.rev)),
-    row("Producto",s=>two(s.prod)),row("Fletes de envío",s=>two(s.shp)),row("Fletes de devolución",s=>two(s.rt)),row("Comisión COD",s=>two(s.cm)),
+    row("Producto",s=>two(s.prod)),row("Fletes de envío",s=>two(s.shp)),row("Fletes de devolución",s=>two(s.rt)),row("Rehusados",s=>two(s.rh)),row("Comisión COD",s=>two(s.cm)),
     row("Comisión plataforma",s=>two(s.pl)),row("Administrativos",s=>two(s.ot)),row("Publicidad",s=>two(s.ads)),row("Costo total",s=>two(s.tot)),
     row("Utilidad neta",s=>two(s.profit)),row("Margen neto",s=>pct(s.margin)),row("ROAS real",s=>isFinite(s.roas)?s.roas.toFixed(2)+"x":"—"),
     row("CPA por entregado",s=>two(s.cpaDel)),row("Utilidad por entregado",s=>two(s.perDel))];
   doc.autoTable({startY:y+6,margin:{left:M,right:M,bottom:40},theme:"grid",styles:{...base,fontSize:8.5,cellPadding:3,halign:"right"},
     headStyles:{...head,halign:"right"},columnStyles:{0:{halign:"left",fontStyle:"bold",cellWidth:140}},
-    head:[["Escenarios de entrega (MXN / USD)",...S.map(s=>s.p+"%")]],body,
+    head:[["Escenarios de entrega ("+CUR+" / USD)",...S.map(s=>s.p+"%")]],body,
     didParseCell:d=>{
       if(d.column.index===0){d.cell.styles.halign="left";return}
       if(d.section!=="body")return;
@@ -545,9 +563,10 @@ async function buildPdf(t){
 }
 function pdfName(t){return "testeo-"+((t.name||"producto").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"producto")+"-"+today()+".pdf"}
 async function downloadPdf(){
+  PLAIN=false;
   const t=st.tests.get(st.sel); if(!t)return;
   if(!window.jspdf){setSave("No se pudo cargar el generador de PDF. Revisá tu conexión.");return}
-  try{const doc=await buildPdf(t);doc.save(pdfName(t));setSave("PDF descargado")}catch(e){setSave("No se pudo generar el PDF")}
+  try{PLAIN=true;const doc=await buildPdf(t);PLAIN=false;doc.save(pdfName(t));setSave("PDF descargado")}catch(e){PLAIN=false;setSave("No se pudo generar el PDF")}
 }
 
 /* ---------- Inicio ---------- */
