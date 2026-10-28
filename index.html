@@ -211,7 +211,7 @@ footer.foot a{color:var(--accent);font-weight:600;text-decoration:none}
       <p class="intro">Tus datos se guardan solo en este navegador: nadie más los ve. Guardá un respaldo de vez en cuando para no perderlos si cambiás de equipo.</p>
     </div>
     <div class="actions">
-      <span class="save" title="Versión del CRM">v28.10b</span>
+      <span class="save" title="Versión del CRM">v28.10d</span>
       <span class="save" id="saveState"></span>
       <button class="btn" id="btnCmp" type="button">Comparar productos</button>
       <button class="btn" id="btnXls" type="button">Descargar Excel</button>
@@ -519,6 +519,7 @@ function calc(t){
   m.exp=at(m.expDel);
   m.beCpa=orders>0?(m.exp.profit+adsL)/orders:(()=>{const o=out(e,e*m.expDel,e*(1-m.expDel),1,0,0);return o.profit})();
   m.beCpaUsd=m.beCpa/(fx||1);
+  m.expGiven=has(t.expDel)||!!m.expFromReal; m.shipGiven=has(t.shipPct);
   m.verdict=verdict(m);
   // simulador
   const sAdsUsd=has(t.simAds)?n(t.simAds):(isFinite(m.adsDay)&&fx>0?m.adsDay/fx:0);
@@ -533,18 +534,19 @@ function calc(t){
 }
 function verdict(m){
   if(!(m.orders>0)||!(m.adsL>0)||!(m.aov>0))return{lvl:"none",title:"Sin diagnóstico",msg:"Cargá precio, gasto en ads y resultados para ver si conviene escalar, optimizar o cortar."};
+  if(!m.expGiven)return{lvl:"none",title:"Falta tu % de entrega",msg:"Cargá tu % de envío y tu % de entrega esperada en “Escenarios de entrega” para ver el diagnóstico con tus números."};
   const r=m.expDel, P=m.exp, low=m.orders<10;
-  const rTxt=pct(r,0)+(m.expFromReal?" (tu entrega real)":"");
+  const ctx="Con tu "+pct(m.e,0)+" de envío"+(m.shipGiven?"":" (sin dato: 100%)")+" y "+pct(r,0)+" de entrega"+(m.expFromReal?" real":"");
   const fx=m.fx, money=v=>mx(v)+" ("+us(v,fx)+")";
   let v;
   if(!isFinite(m.beP)||m.beP>1){
-    v={lvl:"stop",title:"Cortar",msg:m.beCpa<=0?"Los costos por pedido superan lo que cobrás, incluso sin publicidad. Revisá precio, costo de producto y fletes.":"No gana ni con el 100% de entrega. Para empatar con "+rTxt+" de entrega necesitás un CPA de "+money(m.beCpa)+" o menos; hoy está en "+money(m.cpa)+"."};
+    v={lvl:"stop",title:"Cortar",msg:m.beCpa<=0?ctx+", los costos por pedido superan lo que cobrás, incluso sin publicidad. Revisá precio, costo de producto y fletes.":ctx+", pierde "+money(-P.profit)+" y no gana ni con el 100% de entrega. Para empatar necesitás un CPA de "+money(m.beCpa)+" o menos; hoy está en "+money(m.cpa)+"."};
   }else if(P.profit<0){
-    v={lvl:"fix",title:"Optimizar",msg:"Con "+rTxt+" de entrega pierde "+money(-P.profit)+". Necesitás un CPA de "+money(m.beCpa)+" o menos (hoy "+money(m.cpa)+"), un ticket más alto o costos más bajos. Empieza a ganar desde "+pct(m.beP,0)+" de entrega."};
+    v={lvl:"fix",title:"Optimizar",msg:ctx+", pierde "+money(-P.profit)+". Para empatar necesitás un CPA de "+money(m.beCpa)+" o menos (hoy "+money(m.cpa)+"), un ticket más alto o costos más bajos. Con el CPA actual recién gana con más de "+pct(m.beP,0)+" de entrega."};
   }else if(P.margin<0.10||m.beP>r-0.05){
-    v={lvl:"fix",title:"Optimizar",msg:"Gana "+money(P.profit)+" con "+rTxt+" de entrega, pero con poco margen ("+pct(P.margin,0)+"): con "+pct(m.beP,0)+" de entrega ya no gana. Mejorá CPA o ticket antes de escalar fuerte."};
+    v={lvl:"fix",title:"Optimizar",msg:ctx+", gana "+money(P.profit)+", pero con poco margen ("+pct(P.margin,0)+"). Si la entrega baja a "+pct(m.beP,0)+", ya no gana. Mejorá CPA o ticket antes de escalar fuerte."};
   }else{
-    v={lvl:"go",title:"Escalar",msg:"Con "+rTxt+" de entrega gana "+money(P.profit)+" (margen "+pct(P.margin,0)+"). Aguanta hasta "+pct(m.beP,0)+" de entrega sin perder. Podés pagar hasta "+money(m.beCpa)+" por resultado."};
+    v={lvl:"go",title:"Escalar",msg:ctx+", gana "+money(P.profit)+" (margen "+pct(P.margin,0)+"). Si la entrega baja de "+pct(m.beP,0)+", empieza a perder. Podés pagar hasta "+money(m.beCpa)+" por resultado."};
   }
   v.low=low; if(low)v.aux="Pocos resultados todavía ("+m.orders+"): tomalo como tendencia, no como decisión final.";
   return v;
@@ -840,8 +842,8 @@ function renderNumbers(){
   h+='<tr class="grp"><td colspan="'+N+'">Costos</td></tr>';
   h+=row("Producto",s=>cell(s,s.prod));
   h+=row("Fletes de envío",s=>cell(s,s.shp));
-  if(n(t.ret)>0)h+=row("Fletes de devolución",s=>cell(s,s.rt));
-  if(m.reh>0)h+=row("Rehusados",s=>cell(s,s.rh));
+  h+=row("Fletes de devolución",s=>cell(s,s.rt));
+  h+=row("Rehusados"+(m.reh>0?"":' <span style="font-size:10.5px">(no aplica)</span>'),s=>cell(s,s.rh));
   h+=row("Comisión COD",s=>cell(s,s.cm));
   h+=row("Comisión plataforma",s=>cell(s,s.pl));
   if(n(t.other)>0)h+=row("Administrativos",s=>cell(s,s.ot));
