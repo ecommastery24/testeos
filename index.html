@@ -325,7 +325,7 @@ footer.foot a{color:var(--accent);font-weight:600;text-decoration:none}
           <span class="eq" id="adsEq"></span></label>
         <label class="f"><span class="lbl">Impresiones</span><input id="f-impr" data-k="impr" type="number" step="1" min="0"></label>
         <label class="f"><span class="lbl">Clics en el enlace</span><input id="f-clicks" data-k="clicks" type="number" step="1" min="0"></label>
-        <label class="f"><span class="lbl">Visitas a la landing</span><input id="f-visits" data-k="visits" type="number" step="1" min="0"></label>
+        <label class="f"><span class="lbl">Visitas a la landing</span><input id="f-visits" data-k="visits" type="number" step="1" min="0"><span class="eq" id="visEq"></span></label>
         <label class="f"><span class="lbl">Resultados</span><input id="f-orders" data-k="orders" type="number" step="1" min="0"></label>
         <label class="f"><span class="lbl">Valor medio del pedido · <span class="curc">MXN</span> <button type="button" class="q" data-tip="aov">?</button></span><input id="f-aov" data-k="aov" data-m type="number" step="1" min="0" placeholder="Automático"><span class="eq" data-eq="aov"></span></label>
         <label class="f"><span class="lbl">Ventas totales · <span class="curc">MXN</span></span><input id="f-sales" data-k="sales" data-m type="number" step="1" min="0" placeholder="Valor medio × resultados"><span class="eq" data-eq="sales"></span></label>
@@ -471,6 +471,7 @@ function totals(t){
   if(!D.length)return{ads:n(t.ads),impr:n(t.impr),clicks:n(t.clicks),visits:n(t.visits),orders:n(t.orders),days:n(t.days),fromDaily:false};
   const s={ads:0,impr:0,clicks:0,visits:0,orders:0};
   D.forEach(r=>{for(const k in s)s[k]+=n(r[k])});
+  if(n(t.sessions)>0)s.visits=n(t.sessions);
   return{...s,days:D.length,fromDaily:true};
 }
 function calc(t){
@@ -668,6 +669,7 @@ function mountDetail(){
       const cur=st.tests.get(st.sel); if(!cur)return;
       const k=el.dataset.k;
       cur[k]=el.type==="checkbox"?el.checked:(el.type==="number"?(el.value===""?"":parseFloat(el.value)):el.value);
+      if(k==="visits")cur.sessions="";
       if(k!=="status")touch(cur); else cur.updatedAt=Date.now();
       schedule(st.sel); renderNumbers(); renderList();
     });
@@ -784,6 +786,7 @@ function renderNumbers(){
   // totales del registro diario
   ["ads","impr","clicks","visits","orders","days"].forEach(k=>{const el=$("#f-"+k);if(!el)return;el.disabled=T.fromDaily;if(T.fromDaily)el.value=Math.round(T[k]*100)/100;else if(document.activeElement!==el)el.value=has(t[k])?t[k]:""});
   $("#daysEq").textContent=T.fromDaily?"Según el registro diario":"";
+  $("#visEq").textContent=n(t.sessions)>0&&T.visits===n(t.sessions)?"Sesiones de Shopify":"";
   document.querySelectorAll("#detail .adc").forEach(e=>{e.textContent="("+(t.adsCur==="USD"||!t.adsCur?"USD":CUR)+")"});
   (Array.isArray(t.daily)?t.daily:[]).forEach((r,i)=>{const c=document.querySelector('[data-cpa="'+i+'"]');if(c){const a=t.adsCur==="USD"||!t.adsCur?n(r.ads)*fx:n(r.ads);c.textContent=n(r.orders)>0?mx(a/n(r.orders)):"—"}});
   $("#chart").innerHTML=chartSvg(t,m);
@@ -1047,7 +1050,8 @@ function impApply(){
     setSave(r.days.length+" días importados de Meta");
   }else if(imp.type==="shop"){
     t.sales=Math.round(r.total*100)/100; t.aov=Math.round(r.aov*100)/100;
-    if(!(Array.isArray(t.daily)&&t.daily.length)){t.orders=r.cnt; if(r.sessions>0)t.visits=r.sessions; if(r.days>0)t.days=r.days}
+    if(r.sessions>0){t.sessions=r.sessions; t.visits=r.sessions}
+    if(!(Array.isArray(t.daily)&&t.daily.length)){t.orders=r.cnt; if(r.days>0)t.days=r.days}
     setSave(r.cnt+" pedidos importados de Shopify");
   }else{
     t.realDel=r.agg.del; t.realRet=r.agg.ret; t.realTr=r.agg.tr; setSave("Resultado real importado");
@@ -1149,7 +1153,7 @@ function aiSummary(){
   let msg;
   if(imp.type==="meta")msg=r.totalsOnly?"Completa los totales del embudo de este producto.":(r.days.length+(r.days.length===1?" día":" días")+" para el registro diario (reemplaza esas fechas y conserva las demás).");
   else if(imp.type==="shop"){const t=st.tests.get(st.sel), dl=Array.isArray(t.daily)&&t.daily.length;
-    msg=fmtN.format(r.sessions)+" sesiones · "+fmtN.format(r.cnt)+" pedidos · ventas "+mx(r.total)+" · ticket "+mx(r.aov)+(r.days?" · "+r.days+" días":"")+". "+(dl?"Este producto usa registro diario: se completan ventas y valor medio; visitas, resultados y días siguen saliendo del registro.":"Completa visitas, resultados, ventas, valor medio y días de testeo.")}
+    msg=fmtN.format(r.sessions)+" sesiones · "+fmtN.format(r.cnt)+" pedidos · ventas "+mx(r.total)+" · ticket "+mx(r.aov)+(r.days?" · "+r.days+" días":"")+". "+(dl?"Este producto usa registro diario: se completan visitas (sesiones), ventas y valor medio; resultados y días siguen saliendo del registro.":"Completa visitas, resultados, ventas, valor medio y días de testeo.")}
   else msg=r.agg.del+" entregados · "+r.agg.ret+" devueltos · "+r.agg.tr+" en tránsito. Completa el “Resultado real”.";
   O.innerHTML='<b>Revisá los números antes de importar:</b> la lectura con IA puede confundir algún dato.<br>'+esc(msg)+note;
 }
