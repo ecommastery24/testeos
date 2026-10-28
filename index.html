@@ -242,7 +242,7 @@ footer.foot a{color:var(--accent);font-weight:600;text-decoration:none}
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="impTitle">
     <div class="sec-h"><span id="impTitle">Importar datos al producto</span><button class="btn sm" id="impX" type="button" aria-label="Cerrar">×</button></div>
     <div class="fields">
-      <label class="f full"><span class="lbl">¿Qué vas a importar?</span><select id="impType"><option value="meta">Meta Ads (export por día) → registro diario</option><option value="shop">Shopify (export de pedidos) → ventas y ticket</option><option value="cod">Plataforma COD (Dropi, etc.) → resultado real</option></select></label>
+      <label class="f full"><span class="lbl">¿Qué vas a importar?</span><select id="impType"><option value="meta">Meta Ads (export por día) → registro diario</option><option value="shop">Shopify → visitas, pedidos, ventas, ticket y días</option><option value="cod">Plataforma COD (Dropi, etc.) → resultado real</option></select></label>
       <p class="note full" id="impHint" style="margin:0"></p>
       <div class="full seg" id="impSrc" role="group" aria-label="Origen"><button type="button" class="btn sm on" data-src="file">Archivo CSV o Excel</button><button type="button" class="btn sm" data-src="img">Captura de pantalla</button></div>
       <label class="f full" id="impFileRow"><span class="lbl">Archivo CSV o Excel</span><input id="impFile" type="file" accept=".csv,.xlsx,.xls,text/csv"></label>
@@ -890,7 +890,7 @@ const IMP={
     filter:["nombre de la campana","campaign name","nombre del conjunto de anuncios","ad set name","nombre del anuncio","ad name"]},
   shop:{label:"Shopify (export de pedidos)",hint:"En Shopify: Pedidos → Exportar → CSV. Filtrá por el producto para contar solo sus pedidos.",
     fields:[["id","Pedido",["name","nombre","pedido","order"],1],["total","Total",["total"],1],["date","Fecha",["created at","creado el","fecha","created"]]],
-    imgHint:"Sacá una captura de la lista de pedidos filtrada por el producto, o del informe de ventas con pedidos y ventas totales.",
+    imgHint:"Sacá una captura de Shopify Analytics (o del inicio) con sesiones, pedidos, ventas totales y valor medio del pedido, y que se vea el rango de fechas elegido.",
     filter:["lineitem name","nombre del articulo","articulo","producto","product"]},
   cod:{label:"Plataforma COD (Dropi, etc.)",hint:"Exportá tus pedidos de la plataforma con la columna de estado. Después elegís qué estado cuenta como entregado, devuelto o en tránsito.",
     fields:[["status","Estado",["estatus","estado","status"],1],["id","Pedido o guía",["numero de guia","guia","id","orden","pedido","order"]]],
@@ -979,7 +979,8 @@ function impCompute(){
     R.forEach(r=>{const id=String(r[M.id]).trim();if(!id)return;const tv=parseNum(r[M.total]);if(!seen.has(id)||(!seen.get(id)&&tv))seen.set(id,tv)});
     const cnt=seen.size, total=[...seen.values()].reduce((a,b)=>a+b,0);
     if(!cnt)return{err:"No encontré pedidos en la columna elegida."};
-    return{cnt,total,aov:total/cnt,rows:R.length};
+    let days=0; if(M.date){const ds=R.map(r=>parseDate(r[M.date])).filter(Boolean).sort();if(ds.length)days=spanDays(ds[0],ds[ds.length-1])}
+    return{cnt,total,aov:total/cnt,sessions:0,days,rows:R.length};
   }
   const seen=new Set(), counts={};
   R.forEach(r=>{if(M.id){const id=String(r[M.id]).trim();if(id){if(seen.has(id))return;seen.add(id)}}const s=String(r[M.status]==null?"":r[M.status]).trim()||"(vacío)";counts[s]=(counts[s]||0)+1});
@@ -1018,7 +1019,7 @@ function impSummary(){
   if(imp.type==="meta"){
     O.innerHTML='<b>'+r.days.length+' días</b> ('+esc(r.days[0].d)+' a '+esc(r.days[r.days.length-1].d)+') de '+r.rows+' filas · gasto '+fmtN.format(r.tot.ads)+' '+(r.cur||"(moneda de la cuenta)")+' · '+fmtN.format(r.tot.orders)+' resultados.<br><span class="eq">Reemplaza esos días en el registro diario y conserva los demás.'+(r.cur&&r.cur!=="USD"&&r.cur!==CUR?" Ojo: el gasto está en "+r.cur+" y el producto en "+CUR+".":"")+'</span>';
   }else if(imp.type==="shop"){
-    O.innerHTML='<b>'+fmtN.format(r.cnt)+' pedidos</b> · ventas '+mx(r.total)+' · ticket promedio '+mx(r.aov)+'<br><span class="eq">Completa “Ventas totales” y “Valor medio del pedido”. Los montos se toman en '+CUR+'.</span>';
+    O.innerHTML='<b>'+fmtN.format(r.cnt)+' pedidos</b> · ventas '+mx(r.total)+' · ticket promedio '+mx(r.aov)+(r.days?' · '+r.days+' días':'')+'<br><span class="eq">Completa resultados, ventas, valor medio'+(r.days?' y días':'')+' (si el producto no usa registro diario). Los montos se toman en '+CUR+'. Las sesiones no vienen en el export de pedidos: para eso usá una captura de Analytics.</span>';
   }else{
     const L={del:"Entregado",ret:"Devuelto",tr:"En tránsito",skip:"No contar"};
     O.innerHTML='<div class="sttbl">'+Object.entries(r.counts).sort((a,b)=>b[1]-a[1]).map(([s,c])=>'<div class="str"><span>'+esc(s)+' <b>('+c+')</b></span><select data-st="'+esc(s)+'">'+Object.entries(L).map(([k,l])=>'<option value="'+k+'"'+(imp.stMap[s]===k?" selected":"")+'>'+l+'</option>').join("")+'</select></div>').join("")+'</div>'+
@@ -1045,7 +1046,9 @@ function impApply(){
     t.daily=[...by.values()].sort((a,b)=>String(a.d).localeCompare(String(b.d)));
     setSave(r.days.length+" días importados de Meta");
   }else if(imp.type==="shop"){
-    t.sales=Math.round(r.total*100)/100; t.aov=Math.round(r.aov*100)/100; setSave(r.cnt+" pedidos importados de Shopify");
+    t.sales=Math.round(r.total*100)/100; t.aov=Math.round(r.aov*100)/100;
+    if(!(Array.isArray(t.daily)&&t.daily.length)){t.orders=r.cnt; if(r.sessions>0)t.visits=r.sessions; if(r.days>0)t.days=r.days}
+    setSave(r.cnt+" pedidos importados de Shopify");
   }else{
     t.realDel=r.agg.del; t.realRet=r.agg.ret; t.realTr=r.agg.tr; setSave("Resultado real importado");
   }
@@ -1063,8 +1066,9 @@ $("#impOv").addEventListener("click",e=>{if(e.target.id==="impOv")impClose()});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#impOv").hidden)impClose()});
 
 /* ---------- Leer capturas con IA ---------- */
-const AI_PROMPTS={"meta": "These are screenshots from Meta Ads Manager (Facebook/Instagram ads) for one product. Today is {HOY}. Extract the advertising metrics.\nReply with only JSON in this shape: {\"currency\": \"3-letter code of the money amounts if visible, else null\", \"days\": [{\"date\": \"YYYY-MM-DD\", \"spend\": 0, \"impressions\": 0, \"link_clicks\": 0, \"landing_page_views\": 0, \"results\": 0}], \"totals\": {\"spend\": 0, \"impressions\": 0, \"link_clicks\": 0, \"landing_page_views\": 0, \"results\": 0}, \"notes\": \"one short sentence in Spanish about anything unclear, or empty\"}.\nRules: fill \"days\" only when the screenshot shows a breakdown with one row per date; otherwise use an empty array. \"totals\" is the total/summary row when shown, otherwise the sum of the rows you can see (if several campaigns or ad sets appear without a total row, add them up). spend = \"Importe gastado\" / \"Amount spent\". link_clicks = \"Clics en el enlace\" / \"Link clicks\" (use all clicks only if that is the only clicks column). landing_page_views = \"Visitas a la página de destino\" / \"Landing page views\". results = \"Resultados\" / \"Results\" / \"Compras\" / \"Purchases\". Use null for any metric that is not visible. Write numbers as plain JSON numbers without thousands separators, reading the locale correctly (in \"1.234,56\" the comma is the decimal separator). A date without year takes the year of today and is never in the future.", "shop": "These are screenshots from Shopify (an orders list, or a sales / analytics report) for one product. Today is {HOY}.\nReply with only JSON in this shape: {\"currency\": \"3-letter code if visible, else null\", \"orders\": 0, \"sales\": 0, \"aov\": 0, \"notes\": \"one short sentence in Spanish about anything unclear, or empty\"}.\nRules: for an orders list, count the distinct orders you can see and add up their totals. For a report, use its total orders and total (or gross) sales, and its average order value if shown. Use null for anything not visible. Write numbers as plain JSON numbers without thousands separators, reading the locale correctly (in \"1.234,56\" the comma is the decimal separator).", "cod": "These are screenshots from a cash-on-delivery logistics platform (for example Dropi) showing orders and their delivery status for one product. Today is {HOY}.\nGroup every order into: delivered (entregado, delivered, finalizado), returned (devolución, devuelto, rechazado, rehusado, no entregado, retornado), in_transit (en tránsito, en reparto, en camino, guía generada, despachado, en bodega, novedad, en oficina), cancelled (cancelado, anulado, pendiente de confirmación: orders that were never shipped).\nReply with only JSON in this shape: {\"delivered\": 0, \"returned\": 0, \"in_transit\": 0, \"cancelled\": 0, \"statuses\": [{\"name\": \"status as written\", \"count\": 0, \"group\": \"delivered|returned|in_transit|cancelled\"}], \"notes\": \"one short sentence in Spanish about anything unclear, or empty\"}.\nRules: if the screenshot shows a summary with a count per status, use those counts. If it shows a list of orders, count each order once. Write numbers as plain JSON numbers."};
+const AI_PROMPTS={"meta": "These are screenshots from Meta Ads Manager (Facebook/Instagram ads) for one product. Today is {HOY}. Extract the advertising metrics.\nReply with only JSON in this shape: {\"currency\": \"3-letter code of the money amounts if visible, else null\", \"days\": [{\"date\": \"YYYY-MM-DD\", \"spend\": 0, \"impressions\": 0, \"link_clicks\": 0, \"landing_page_views\": 0, \"results\": 0}], \"totals\": {\"spend\": 0, \"impressions\": 0, \"link_clicks\": 0, \"landing_page_views\": 0, \"results\": 0}, \"notes\": \"one short sentence in Spanish about anything unclear, or empty\"}.\nRules: fill \"days\" only when the screenshot shows a breakdown with one row per date; otherwise use an empty array. \"totals\" is the total/summary row when shown, otherwise the sum of the rows you can see (if several campaigns or ad sets appear without a total row, add them up). spend = \"Importe gastado\" / \"Amount spent\". link_clicks = \"Clics en el enlace\" / \"Link clicks\" (use all clicks only if that is the only clicks column). landing_page_views = \"Visitas a la página de destino\" / \"Landing page views\". results = \"Resultados\" / \"Results\" / \"Compras\" / \"Purchases\". Use null for any metric that is not visible. Write numbers as plain JSON numbers without thousands separators, reading the locale correctly (in \"1.234,56\" the comma is the decimal separator). A date without year takes the year of today and is never in the future.", "shop": "These are screenshots from Shopify (Analytics / Reports / Home dashboard, or an orders list) for one product or store. Today is {HOY}.\nReply with only JSON in this shape: {\"currency\": \"3-letter code if visible, else null\", \"sessions\": 0, \"orders\": 0, \"sales\": 0, \"aov\": 0, \"start_date\": \"YYYY-MM-DD\", \"end_date\": \"YYYY-MM-DD\", \"days\": 0, \"notes\": \"one short sentence in Spanish about anything unclear, or empty\"}.\nRules: sessions = \"Sesiones\" / \"Sessions\" / \"Sesiones de la tienda online\" (store visits). orders = \"Pedidos\" / \"Orders\" (total orders). sales = \"Ventas totales\" / \"Total sales\" (use \"Ventas brutas\" / \"Gross sales\" only if total sales is not shown). aov = \"Valor medio del pedido\" / \"Average order value\"; if not shown, sales divided by orders. start_date and end_date = the date range selected in the report (for example \"1 oct – 7 oct 2026\" or \"Últimos 7 días\", which you convert to real dates ending today); days = number of days in that range, both ends included. For an orders list, count the distinct orders you can see, add up their totals, and take the dates of the first and last order. Use null for anything not visible. Write numbers as plain JSON numbers without thousands separators, reading the locale correctly (in \"1.234,56\" the comma is the decimal separator). A date without year takes the year of today and is never in the future.", "cod": "These are screenshots from a cash-on-delivery logistics platform (for example Dropi) showing orders and their delivery status for one product. Today is {HOY}.\nGroup every order into: delivered (entregado, delivered, finalizado), returned (devolución, devuelto, rechazado, rehusado, no entregado, retornado), in_transit (en tránsito, en reparto, en camino, guía generada, despachado, en bodega, novedad, en oficina), cancelled (cancelado, anulado, pendiente de confirmación: orders that were never shipped).\nReply with only JSON in this shape: {\"delivered\": 0, \"returned\": 0, \"in_transit\": 0, \"cancelled\": 0, \"statuses\": [{\"name\": \"status as written\", \"count\": 0, \"group\": \"delivered|returned|in_transit|cancelled\"}], \"notes\": \"one short sentence in Spanish about anything unclear, or empty\"}.\nRules: if the screenshot shows a summary with a count per status, use those counts. If it shows a list of orders, count each order once. Write numbers as plain JSON numbers."};
 const numAI=v=>v==null||v===""?0:parseNum(v);
+function spanDays(a,b){if(!a||!b)return 0;const d=Math.round((new Date(b+"T12:00:00")-new Date(a+"T12:00:00"))/864e5)+1;return d>0&&d<400?d:0}
 async function toJpegB64(file){
   const bmp=await createImageBitmap(file); const k=Math.min(1,1600/Math.max(bmp.width,bmp.height));
   const c=document.createElement("canvas"); c.width=Math.round(bmp.width*k); c.height=Math.round(bmp.height*k);
@@ -1093,7 +1097,8 @@ function aiToReview(type,d){
     const T=d.totals||{};
     return{days,tot:{ads:numAI(T.spend),impr:numAI(T.impressions),clicks:numAI(T.link_clicks),visits:numAI(T.landing_page_views),orders:numAI(T.results)},cur:String(d.currency||"").toUpperCase().slice(0,3),date:"",notes};
   }
-  if(type==="shop"){const o=numAI(d.orders),s=numAI(d.sales);return{cnt:o,total:s,aov:numAI(d.aov)||(o?s/o:0),notes}}
+  if(type==="shop"){const o=numAI(d.orders),s=numAI(d.sales),st0=parseDate(d.start_date)||"",en=parseDate(d.end_date)||"";
+    return{cnt:o,total:s,aov:numAI(d.aov)||(o?s/o:0),sessions:numAI(d.sessions),start:st0,end:en,days:numAI(d.days)||spanDays(st0,en),notes}}
   return{agg:{del:numAI(d.delivered),ret:numAI(d.returned),tr:numAI(d.in_transit),skip:numAI(d.cancelled)},statuses:Array.isArray(d.statuses)?d.statuses:[],notes};
 }
 function aiLast(){
@@ -1105,7 +1110,7 @@ function aiLast(){
     if(Array.isArray(t.daily)&&t.daily.length)return{err:"Este producto usa registro diario: poné la fecha de estos datos."};
     return{totalsOnly:true,tot:a.tot,cur,ai:true};
   }
-  if(imp.type==="shop")return a.cnt>0?{cnt:a.cnt,total:a.total,aov:a.cnt?a.total/a.cnt:0,ai:true}:{err:"Falta la cantidad de pedidos."};
+  if(imp.type==="shop")return a.cnt>0?{cnt:a.cnt,total:a.total,aov:a.aov||(a.cnt?a.total/a.cnt:0),sessions:a.sessions,days:a.days,ai:true}:{err:"Falta la cantidad de pedidos."};
   return{agg:a.agg,ai:true};
 }
 function aiRenderReview(){
@@ -1123,7 +1128,7 @@ function aiRenderReview(){
       h+='<div class="fields" style="margin-top:10px"><label class="f"><span class="lbl">Gasto</span>'+inp("tot.ads",a.tot.ads)+'</label><label class="f"><span class="lbl">Impresiones</span>'+inp("tot.impr",a.tot.impr)+'</label><label class="f"><span class="lbl">Clics en el enlace</span>'+inp("tot.clicks",a.tot.clicks)+'</label><label class="f"><span class="lbl">Visitas a la landing</span>'+inp("tot.visits",a.tot.visits)+'</label><label class="f"><span class="lbl">Resultados</span>'+inp("tot.orders",a.tot.orders)+'</label></div>';
     }
   }else if(imp.type==="shop"){
-    h+='<div class="fields"><label class="f"><span class="lbl">Pedidos</span>'+inp("cnt",a.cnt)+'</label><label class="f"><span class="lbl">Ventas totales · '+CUR+'</span>'+inp("total",a.total)+'</label></div>';
+    h+='<div class="fields"><label class="f"><span class="lbl">Sesiones (visitas)</span>'+inp("sessions",a.sessions)+'</label><label class="f"><span class="lbl">Pedidos</span>'+inp("cnt",a.cnt)+'</label><label class="f"><span class="lbl">Ventas totales · '+CUR+'</span>'+inp("total",a.total)+'</label><label class="f"><span class="lbl">Valor medio del pedido · '+CUR+'</span>'+inp("aov",Math.round(a.aov*100)/100)+'</label><label class="f"><span class="lbl">Desde</span>'+inp("start",a.start,"date")+'</label><label class="f"><span class="lbl">Hasta</span>'+inp("end",a.end,"date")+'</label><label class="f"><span class="lbl">Días de testeo</span>'+inp("days",a.days)+'</label></div>';
   }else{
     h+='<div class="fields"><label class="f"><span class="lbl">Entregados</span>'+inp("agg.del",a.agg.del)+'</label><label class="f"><span class="lbl">Devueltos / rehusados</span>'+inp("agg.ret",a.agg.ret)+'</label><label class="f"><span class="lbl">En tránsito</span>'+inp("agg.tr",a.agg.tr)+'</label><label class="f"><span class="lbl">Cancelados (no cuentan)</span>'+inp("agg.skip",a.agg.skip)+'</label></div>';
     if(a.statuses.length)h+='<p class="note">Estados leídos: '+a.statuses.map(s=>esc(s&&s.name)+" ("+esc(s&&s.count)+")").join(" · ")+'</p>';
@@ -1132,6 +1137,7 @@ function aiRenderReview(){
   B.querySelectorAll("[data-ai]").forEach(el=>el.addEventListener(el.tagName==="SELECT"?"change":"input",()=>{
     const p=el.dataset.ai.split("."); let o=imp.ai; for(let i=0;i<p.length-1;i++)o=o[p[i]];
     const k=p[p.length-1]; o[k]=el.type==="number"?parseNum(el.value):el.value;
+    if(imp.type==="shop"&&(k==="start"||k==="end")){const d=spanDays(imp.ai.start,imp.ai.end);if(d){imp.ai.days=d;const dd=$('[data-ai="days"]');if(dd)dd.value=d}}
     aiSummary();
   }));
   aiSummary();
@@ -1142,7 +1148,8 @@ function aiSummary(){
   if(r.err){O.innerHTML='<span class="neg">'+esc(r.err)+'</span>'+note;return}
   let msg;
   if(imp.type==="meta")msg=r.totalsOnly?"Completa los totales del embudo de este producto.":(r.days.length+(r.days.length===1?" día":" días")+" para el registro diario (reemplaza esas fechas y conserva las demás).");
-  else if(imp.type==="shop")msg=fmtN.format(r.cnt)+" pedidos · ticket promedio "+mx(r.aov)+". Completa “Ventas totales” y “Valor medio del pedido”.";
+  else if(imp.type==="shop"){const t=st.tests.get(st.sel), dl=Array.isArray(t.daily)&&t.daily.length;
+    msg=fmtN.format(r.sessions)+" sesiones · "+fmtN.format(r.cnt)+" pedidos · ventas "+mx(r.total)+" · ticket "+mx(r.aov)+(r.days?" · "+r.days+" días":"")+". "+(dl?"Este producto usa registro diario: se completan ventas y valor medio; visitas, resultados y días siguen saliendo del registro.":"Completa visitas, resultados, ventas, valor medio y días de testeo.")}
   else msg=r.agg.del+" entregados · "+r.agg.ret+" devueltos · "+r.agg.tr+" en tránsito. Completa el “Resultado real”.";
   O.innerHTML='<b>Revisá los números antes de importar:</b> la lectura con IA puede confundir algún dato.<br>'+esc(msg)+note;
 }
