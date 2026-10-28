@@ -211,7 +211,7 @@ footer.foot a{color:var(--accent);font-weight:600;text-decoration:none}
       <p class="intro">Tus datos se guardan solo en este navegador: nadie más los ve. Guardá un respaldo de vez en cuando para no perderlos si cambiás de equipo.</p>
     </div>
     <div class="actions">
-      <span class="save" title="Versión del CRM">v28.10d</span>
+      <span class="save" title="Versión del CRM">v28.10e</span>
       <span class="save" id="saveState"></span>
       <button class="btn" id="btnCmp" type="button">Comparar productos</button>
       <button class="btn" id="btnXls" type="button">Descargar Excel</button>
@@ -302,7 +302,7 @@ footer.foot a{color:var(--accent);font-weight:600;text-decoration:none}
         <label class="f"><span class="lbl">Flete de envío</span><input id="f-ship" data-k="ship" data-m type="number" step="1" min="0"><span class="eq" data-eq="ship"></span></label>
         <label class="f"><span class="lbl">Flete de devolución</span><input id="f-ret" data-k="ret" data-m type="number" step="1" min="0"><span class="eq" data-eq="ret"></span></label>
         <label class="f full"><span class="lbl">Costo de rehusado (por pedido enviado que no se entrega) <button type="button" class="q" data-tip="reh">?</button></span>
-          <span class="inline wrapline"><select id="f-rehMode" data-k="rehMode" data-def="none"><option value="none">No aplica</option><option value="auto">Automático: flete de envío + comisión plataforma</option><option value="manual">Monto manual</option></select><input id="f-rehAmt" data-k="rehAmt" type="number" step="1" min="0" placeholder="Monto en moneda local"></span>
+          <span class="inline wrapline"><select id="f-rehMode" data-k="rehMode" data-def="auto"><option value="none">No aplica</option><option value="auto">Automático: flete de envío + comisión plataforma</option><option value="manual">Monto manual</option></select><input id="f-rehAmt" data-k="rehAmt" type="number" step="1" min="0" placeholder="Monto en moneda local"></span>
           <span class="eq" id="rehEq"></span></label>
         <label class="f"><span class="lbl">Comisión COD (USD por entregado)</span><input id="f-codUsd" data-k="codUsd" type="number" step="0.01" min="0"><span class="eq" data-equsd="codUsd"></span></label>
         <label class="f"><span class="lbl">Comisión plataforma (USD por resultado)</span><input id="f-platUsd" data-k="platUsd" type="number" step="0.01" min="0"><span class="eq" data-equsd="platUsd"></span></label>
@@ -464,7 +464,7 @@ const div=(a,b)=>b>0?a/b:NaN;
 const today=()=>new Date().toISOString().slice(0,10);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
-function blank(){return{name:"Nuevo producto",date:today(),status:"test",cur:"MXN",fx:19,days:3,notes:"",price:0,cost:0,packs:false,ship:0,ret:0,rehMode:"none",rehAmt:"",codUsd:1.5,platUsd:1,other:0,taxPct:"",gwPct:"",fixedMonth:"",recover:true,ads:0,adsCur:"USD",impr:0,clicks:0,visits:0,orders:0,aov:"",sales:"",shipPct:"",expDel:"",daily:[],realDel:"",realRet:"",realTr:"",simAds:"",simDays:"",simCpa:"",simCash:"",example:false,updatedAt:Date.now()}}
+function blank(){return{name:"Nuevo producto",date:today(),status:"test",cur:"MXN",fx:19,days:3,notes:"",price:0,cost:0,packs:false,ship:0,ret:0,rehMode:"auto",rehAmt:"",codUsd:1.5,platUsd:1,other:0,taxPct:"",gwPct:"",fixedMonth:"",recover:true,ads:0,adsCur:"USD",impr:0,clicks:0,visits:0,orders:0,aov:"",sales:"",shipPct:"",expDel:"",daily:[],realDel:"",realRet:"",realTr:"",simAds:"",simDays:"",simCpa:"",simCash:"",example:false,updatedAt:Date.now()}}
 
 /* ---------- Cálculos ---------- */
 function totals(t){
@@ -486,7 +486,7 @@ function calc(t){
   const price=n(t.price), ship=n(t.ship), ret=n(t.ret), codL=n(t.codUsd)*fx, platL=n(t.platUsd)*fx, other=n(t.other);
   const tax=n(t.taxPct)/100, gw=n(t.gwPct)/100, fixMonth=n(t.fixedMonth);
   const adsL=t.adsCur==="USD"||!t.adsCur?T.ads*fx:T.ads;
-  const reh=t.rehMode==="auto"?ship+platL:t.rehMode==="manual"?n(t.rehAmt):0;
+  const rm=t.rehMode||"auto", reh=rm==="auto"?ship+platL:rm==="manual"?n(t.rehAmt):0;
   const aov=n(t.aov)>0?n(t.aov):(n(t.sales)>0&&orders>0?n(t.sales)/orders:(isFinite(packPrice)?packPrice:price));
   const sales=n(t.sales)>0?n(t.sales):aov*orders;
   const e=has(t.shipPct)?Math.min(1,Math.max(0,n(t.shipPct)/100)):1, sent=orders*e;
@@ -779,7 +779,7 @@ function renderNumbers(){
   const ol=$("#optLocal"); if(ol)ol.textContent=CUR;
   const fxIn=$("#f-fx"); if(fxIn){fxIn.disabled=CUR==="USD"; if(CUR==="USD")fxIn.value=1}
   $("#f-rehAmt").hidden=t.rehMode!=="manual";
-  $("#rehEq").textContent=m.reh>0?"≈ "+mx(m.reh)+" / "+us(m.reh,fx)+" por pedido no entregado":(t.rehMode==="auto"?"Cargá flete de envío y comisión de plataforma":"");
+  $("#rehEq").textContent=m.reh>0?"≈ "+mx(m.reh)+" / "+us(m.reh,fx)+" por pedido no entregado":((t.rehMode||"auto")==="auto"?"Cargá flete de envío y comisión de plataforma":"");
   document.querySelectorAll("#detail [data-eq]").forEach(e=>{e.textContent="≈ "+us(n(t[e.dataset.eq]),fx)});
   document.querySelectorAll("#detail [data-equsd]").forEach(e=>{e.textContent="≈ "+mx(n(t[e.dataset.equsd])*fx)});
   $("#packBox").hidden=!t.packs; $("#f-cost").disabled=!!t.packs;
