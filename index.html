@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CRM de Testeos · EcomMastery VIP</title>
-<meta name="description" content="Herramienta gratis de EcomMastery VIP: cargá tus testeos de producto y mirá diagnóstico, métricas, costos y escenarios de entrega del 50% al 100% en tu moneda local y en USD.">
-<meta property="og:title" content="CRM de Testeos · EcomMastery VIP">
-<meta property="og:description" content="Diagnóstico, métricas, costos y escenarios de entrega para tus testeos de producto, en tu moneda local y en USD.">
+<title>CRM de Productos · EcomMastery VIP</title>
+<meta name="description" content="Herramienta gratis de EcomMastery VIP: seguí tus productos desde el testeo hasta la escala: diagnóstico, métricas, costos, resultado real y escenarios de entrega del 50% al 100% en tu moneda local y en USD.">
+<meta property="og:title" content="CRM de Productos · EcomMastery VIP">
+<meta property="og:description" content="Diagnóstico, métricas, costos y escenarios de entrega para tus productos en contra entrega, en tu moneda local y en USD.">
 <meta property="og:image" content="logo.png">
 <link rel="icon" href="logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
-/* Layout: lista de testeos a la izquierda, ficha + resultados a la derecha; en móvil se apila */
+/* Layout: lista de productos a la izquierda, ficha + resultados a la derecha; en móvil se apila */
 :root{
   --bg:#F4F6F4; --surface:#FFFFFF; --sunk:#EEF2EF; --ink:#14201A; --muted:#5D6B63; --line:#DCE3DE;
   --accent:#0F6B4F; --accent-ink:#FFFFFF; --good:#1D8547; --bad:#BF3F2B; --warn:#A86E12;
@@ -171,6 +171,16 @@ th.sortable:hover{color:var(--accent)}
 .confirm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;background:var(--bad-bg);color:var(--bad);border-radius:8px;padding:8px 10px}
 .actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .ex{font:600 10px var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--warn)}
+.ov{position:fixed;inset:0;z-index:60;background:rgba(10,16,13,.55);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:max(24px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px))}
+.modal{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:18px;width:100%;max-width:620px;box-shadow:0 30px 70px rgba(0,0,0,.35);margin:auto 0}
+.impsum{margin-top:14px;padding:12px;border-radius:10px;background:var(--sunk);font-size:13px;line-height:1.5}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.thumbs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.thumb{display:inline-flex;align-items:center;gap:6px;background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:3px 4px 3px 9px;font-size:12px;max-width:100%;overflow-wrap:anywhere}
+.sttbl{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto}
+.str{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:space-between}
+.str span{min-width:0;overflow-wrap:anywhere}
+.str select{width:auto;flex:0 0 150px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 .hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding-block:8px 22px;margin-bottom:18px;border-bottom:1px solid var(--line)}
 .brand{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:var(--ink)}
@@ -196,18 +206,18 @@ footer.foot a{color:var(--accent);font-weight:600;text-decoration:none}
   </div>
   <header class="top">
     <div>
-      <h1>CRM de Testeos</h1>
-      <p class="sub">Métricas, costos, diagnóstico y escenarios de entrega en tu moneda local y en dólares.</p>
+      <h1>CRM de Productos</h1>
+      <p class="sub">Testeo, escala y rentabilidad real de tus productos en contra entrega, en tu moneda local y en dólares.</p>
       <p class="intro">Tus datos se guardan solo en este navegador: nadie más los ve. Guardá un respaldo de vez en cuando para no perderlos si cambiás de equipo.</p>
     </div>
     <div class="actions">
       <span class="save" id="saveState"></span>
-      <button class="btn" id="btnCmp" type="button">Comparar testeos</button>
+      <button class="btn" id="btnCmp" type="button">Comparar productos</button>
       <button class="btn" id="btnXls" type="button">Descargar Excel</button>
       <button class="btn" id="btnBackup" type="button">Guardar respaldo</button>
       <button class="btn" id="btnRestore" type="button">Cargar respaldo</button>
       <input type="file" id="fileRestore" accept=".json,application/json" hidden>
-      <button class="btn primary" id="btnNew" type="button">+ Nuevo testeo</button>
+      <button class="btn primary" id="btnNew" type="button">+ Nuevo producto</button>
     </div>
   </header>
   <div class="banner" id="bkBanner" hidden>
@@ -217,7 +227,7 @@ footer.foot a{color:var(--accent);font-weight:600;text-decoration:none}
 
   <div class="grid">
     <aside>
-      <div class="sec-h"><span>Testeos</span><span id="count"></span></div>
+      <div class="sec-h"><span>Productos</span><span id="count"></span></div>
       <div class="list" id="list"></div>
     </aside>
     <div id="detail" style="min-width:0"></div>
@@ -228,6 +238,25 @@ footer.foot a{color:var(--accent);font-weight:600;text-decoration:none}
   </footer>
 </div>
 <div id="tip" role="tooltip" hidden></div>
+<div class="ov" id="impOv" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="impTitle">
+    <div class="sec-h"><span id="impTitle">Importar datos al producto</span><button class="btn sm" id="impX" type="button" aria-label="Cerrar">×</button></div>
+    <div class="fields">
+      <label class="f full"><span class="lbl">¿Qué vas a importar?</span><select id="impType"><option value="meta">Meta Ads (export por día) → registro diario</option><option value="shop">Shopify (export de pedidos) → ventas y ticket</option><option value="cod">Plataforma COD (Dropi, etc.) → resultado real</option></select></label>
+      <p class="note full" id="impHint" style="margin:0"></p>
+      <div class="full seg" id="impSrc" role="group" aria-label="Origen"><button type="button" class="btn sm on" data-src="file">Archivo CSV o Excel</button><button type="button" class="btn sm" data-src="img">Captura de pantalla</button></div>
+      <label class="f full" id="impFileRow"><span class="lbl">Archivo CSV o Excel</span><input id="impFile" type="file" accept=".csv,.xlsx,.xls,text/csv"></label>
+      <div class="full" id="impImgRow" hidden>
+        <label class="f"><span class="lbl">Capturas (hasta 3) · también podés pegarlas con Ctrl+V</span><input id="impImg" type="file" accept="image/png,image/jpeg,image/webp" multiple></label>
+        <div class="thumbs" id="impThumbs"></div>
+        <button class="btn primary sm" id="impRead" type="button" disabled style="margin-top:8px">Leer captura</button>
+      </div>
+    </div>
+    <div id="impMap" style="margin-top:12px"></div>
+    <div class="impsum" id="impSum"></div>
+    <div class="actions" style="justify-content:flex-end;margin-top:14px"><button class="btn" id="impCancel" type="button">Cancelar</button><button class="btn primary" id="impApply" type="button" disabled>Importar</button></div>
+  </div>
+</div>
 
 <template id="tplDetail">
 <main>
@@ -239,7 +268,7 @@ footer.foot a{color:var(--accent);font-weight:600;text-decoration:none}
         <label class="f"><span class="lbl">Fecha de inicio</span><input id="f-date" data-k="date" type="date"></label>
         <label class="f"><span class="lbl">Estado</span>
           <select id="f-status" data-k="status">
-            <option value="test">En testeo</option><option value="esc">Escalar</option>
+            <option value="test">En testeo</option><option value="esc">Escalando</option>
             <option value="pau">Pausado</option><option value="desc">Descartado</option>
           </select></label>
         <div class="f full" style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)">
@@ -249,7 +278,7 @@ footer.foot a{color:var(--accent);font-weight:600;text-decoration:none}
         </div>
         <label class="f"><span class="lbl">Moneda local</span><select id="f-cur" data-k="cur" data-def="MXN"><option value="MXN">MXN · Peso mexicano</option><option value="COP">COP · Peso colombiano</option><option value="ARS">ARS · Peso argentino</option><option value="CLP">CLP · Peso chileno</option><option value="PEN">PEN · Sol peruano</option><option value="GTQ">GTQ · Quetzal guatemalteco</option><option value="CRC">CRC · Colón costarricense</option><option value="DOP">DOP · Peso dominicano</option><option value="UYU">UYU · Peso uruguayo</option><option value="PYG">PYG · Guaraní paraguayo</option><option value="BOB">BOB · Boliviano</option><option value="HNL">HNL · Lempira hondureño</option><option value="EUR">EUR · Euro</option><option value="USD">USD · Dólar estadounidense</option></select></label>
         <label class="f"><span class="lbl">Tipo de cambio (<span class="curc">MXN</span> por 1 USD)</span><input id="f-fx" data-k="fx" type="number" step="0.01" min="0"></label>
-        <label class="f"><span class="lbl">Días de testeo</span><input id="f-days" data-k="days" type="number" step="1" min="0"><span class="eq" id="daysEq"></span></label>
+        <label class="f"><span class="lbl">Días del período <button type="button" class="q" data-tip="days">?</button></span><input id="f-days" data-k="days" type="number" step="1" min="0"><span class="eq" id="daysEq"></span></label>
         <label class="f full"><span class="lbl">Notas (ángulo, creativo, proveedor)</span><textarea id="f-notes" data-k="notes"></textarea></label>
       </div>
     </section>
@@ -291,7 +320,7 @@ footer.foot a{color:var(--accent);font-weight:600;text-decoration:none}
     <section class="panel">
       <div class="sec-h"><span>Publicidad y embudo</span></div>
       <div class="fields">
-        <label class="f full"><span class="lbl">Gasto en ads (total del testeo)</span>
+        <label class="f full"><span class="lbl">Gasto en ads (total del período)</span>
           <span class="inline"><input id="f-ads" data-k="ads" type="number" step="0.01" min="0"><select id="f-adsCur" data-k="adsCur" data-def="USD"><option value="USD">USD</option><option value="MXN" id="optLocal">MXN</option></select></span>
           <span class="eq" id="adsEq"></span></label>
         <label class="f"><span class="lbl">Impresiones</span><input id="f-impr" data-k="impr" type="number" step="1" min="0"></label>
@@ -318,8 +347,9 @@ footer.foot a{color:var(--accent);font-weight:600;text-decoration:none}
     </section>
 
     <div class="actions" id="actions">
-      <button class="btn primary" id="btnPdf" type="button">Descargar PDF</button>
-      <button class="btn" id="btnDup" type="button">Duplicar testeo</button>
+      <button class="btn primary" id="btnImp" type="button">Importar datos</button>
+      <button class="btn" id="btnPdf" type="button">Descargar PDF</button>
+      <button class="btn" id="btnDup" type="button">Duplicar producto</button>
       <button class="btn danger" id="btnDel" type="button">Eliminar</button>
     </div>
   </div>
@@ -327,7 +357,7 @@ footer.foot a{color:var(--accent);font-weight:600;text-decoration:none}
   <div class="stack">
     <section class="verdict" id="verdict"></section>
     <section class="panel">
-      <div class="sec-h"><span>Métricas del testeo</span></div>
+      <div class="sec-h"><span>Métricas del producto</span></div>
       <div class="kpis" id="kpis"></div>
       <div class="be" id="be"></div>
     </section>
@@ -365,7 +395,7 @@ footer.foot a{color:var(--accent);font-weight:600;text-decoration:none}
 const MODE="public";
 const LOGO_SRC="logo.png";
 const PCTS=[50,60,70,80,90,100];
-const STATUS={test:"En testeo",esc:"Escalar",pau:"Pausado",desc:"Descartado"};
+const STATUS={test:"En testeo",esc:"Escalando",pau:"Pausado",desc:"Descartado"};
 const LS="crm-testeos-v1", LS_TPL="crm-testeos-tpl-v1", LS_BK="crm-testeos-lastbackup";
 const $=s=>document.querySelector(s);
 const st={tests:new Map(),tpls:new Map(),sel:null,db:null,dl:null,mode:"loading",view:"detail",cmpSort:{k:"date",dir:-1},dirty:new Set(),inflight:new Map(),timers:new Map(),confirmDel:false,bkLater:false};
@@ -388,6 +418,7 @@ const COUNTRY_PRESETS=[
 const TPL_FIELDS=["cur","fx","ship","ret","rehMode","rehAmt","codUsd","platUsd","other","taxPct","gwPct","fixedMonth","shipPct","expDel","recover"];
 
 const TIPS={
+  days:"Días que abarcan los datos cargados (el testeo o el período de escala que estés midiendo). Si usás el registro diario, se calculan solos.",
   cpa:"Costo por resultado: gasto en ads ÷ resultados. Comparalo con el CPA máximo: si tu CPA está por debajo, el producto gana a tu entrega esperada.",
   cpaSent:"Gasto en ads ÷ pedidos enviados. Es lo que te cuesta en publicidad cada pedido que realmente sale.",
   cpm:"Costo por cada 1.000 impresiones. Muestra qué tan caro es mostrarle tu anuncio a ese público. Sirve para comparar públicos y creativos entre sí.",
@@ -399,7 +430,7 @@ const TIPS={
   aov:"Lo que paga en promedio cada cliente. Si lo dejás vacío se calcula con las ventas totales, los packs o el precio de venta. Sube con packs x2, x3 y upsells.",
   shipPct:"De cada 100 resultados, cuántos se confirman y se despachan. Los no confirmados no generan flete ni costo de producto.",
   expDel:"El % de entrega que esperás para este producto y país. Se usa para el diagnóstico, el CPA máximo y el simulador. Si cargás el resultado real, se usa tu entrega real.",
-  beP:"El % de entrega de los pedidos enviados a partir del cual el testeo deja de perder plata.",
+  beP:"El % de entrega de los pedidos enviados a partir del cual el producto deja de perder plata.",
   beCpa:"Lo máximo que podés pagar por resultado sin perder, con tu % de envío y tu entrega esperada. Si tu CPA está por debajo, ganás.",
   reh:"Lo que te cobran por cada pedido enviado que el cliente no recibe. En muchos países es el flete y la comisión de plataforma otra vez.",
   real:"Cuando avancen las entregas, cargá cuántos se entregaron, cuántos se devolvieron y cuántos siguen en tránsito. Vas a ver tu utilidad real y tu entrega real.",
@@ -407,7 +438,7 @@ const TIPS={
   sim:"Proyecta qué pasa si escalás con este gasto diario, CPA y entrega. En contra entrega la plata vuelve tarde: el capital estimado es lo que necesitás para cubrir ads, producto y fletes hasta cobrar.",
   tax:"Impuestos que pagás sobre lo cobrado, por ejemplo IVA.",
   gw:"Comisión de pasarela u otros porcentajes sobre lo cobrado, por ejemplo pagos con tarjeta.",
-  fixed:"Costos fijos del mes: Shopify, apps, dominio, herramientas. Se prorratean según los días del testeo.",
+  fixed:"Costos fijos del mes: Shopify, apps, dominio, herramientas. Se prorratean según los días del período.",
   packs:"Si vendés x1, x2 y x3, cargá precio, costo y % de ventas de cada pack. Se calcula el costo de producto y el ticket promedio ponderados.",
   daily:"Cargá gasto y resultados por día para ver cómo evoluciona el CPA. Si usás el registro diario, el gasto, las impresiones, los clics, las visitas, los resultados y los días se calculan solos.",
   tpl:"Aplicá los costos típicos de un país o de una plantilla tuya: moneda, fletes, comisiones, rehusado, % de envío y entrega. Guardá tus propias plantillas desde la sección de costos.",
@@ -535,7 +566,7 @@ async function flush(id){
   const t=st.tests.get(id); if(!t){st.dirty.delete(id);return}
   st.inflight.set(id,true); st.dirty.delete(id);
   try{await st.db.collection("tests").doc(id).set({...t});setSave(st.dirty.size?"Guardando…":"Guardado")}
-  catch(e){st.dirty.add(id);setSave(e&&e.code==="quota_exceeded"?"Sin espacio: eliminá testeos viejos":"No se pudo guardar. Reintentá editando un campo.")}
+  catch(e){st.dirty.add(id);setSave(e&&e.code==="quota_exceeded"?"Sin espacio: eliminá productos viejos":"No se pudo guardar. Reintentá editando un campo.")}
   finally{st.inflight.set(id,false)}
 }
 async function removeTest(id){
@@ -565,7 +596,7 @@ function checkBackup(){
   const daysSince=last?Math.floor((Date.now()-last)/864e5):null;
   const show=lastEdit>last&&(!last||daysSince>=7);
   B.hidden=!show;
-  if(show)$("#bkText").textContent=last?"Hace "+daysSince+" días que no guardás un respaldo. Si se borran los datos del navegador, perdés tus testeos.":"Todavía no guardaste un respaldo de tus testeos. Si se borran los datos del navegador, los perdés.";
+  if(show)$("#bkText").textContent=last?"Hace "+daysSince+" días que no guardás un respaldo. Si se borran los datos del navegador, perdés tus productos.":"Todavía no guardaste un respaldo de tus productos. Si se borran los datos del navegador, los perdés.";
 }
 
 /* ---------- Ayudas ---------- */
@@ -589,7 +620,7 @@ const VCLS={go:"go",fix:"fix",stop:"stop"};
 function renderList(){
   const L=$("#list"); L.innerHTML="";
   const rows=sorted(); $("#count").textContent=rows.length||"";
-  if(!rows.length){L.innerHTML='<div class="note">Sin testeos todavía.</div>';return}
+  if(!rows.length){L.innerHTML='<div class="note">Sin productos todavía.</div>';return}
   rows.forEach(([id,t])=>{
     const m=calc(t), P=m.exp;
     const b=document.createElement("button"); b.type="button"; b.className="item"+(id===st.sel&&st.view==="detail"?" sel":"");
@@ -609,8 +640,8 @@ function renderCompare(){
   rows.sort((a,b)=>{const A=val(a),B=val(b);return (A>B?1:A<B?-1:0)*s.dir});
   const cols=[["name","Producto"],["cur","Moneda"],["status","Estado"],["vo","Diagnóstico"],["orders","Resultados"],["ads","Gasto USD"],["cpa","CPA USD"],["roas","ROAS bruto"],["ship","% envío"],["be","Entrega mín."],["exp","Utilidad a entrega esperada"],["p70","Utilidad 70%"],["p80","Utilidad 80%"],["real","Entrega real"],["realP","Utilidad real"]];
   const fU=v=>isFinite(v)?fmtUS.format(v):"—", cls=v=>isFinite(v)?(v>=0?"pos":"neg"):"";
-  let h='<section class="panel"><div class="sec-h"><span>Comparador de testeos</span><span>Montos en USD para comparar entre países</span></div>';
-  if(!rows.length){h+='<div class="empty"><h2>No hay testeos para comparar</h2></div></section>';D.innerHTML=h;return}
+  let h='<section class="panel"><div class="sec-h"><span>Comparador de productos</span><span>Montos en USD para comparar entre países</span></div>';
+  if(!rows.length){h+='<div class="empty"><h2>No hay productos para comparar</h2></div></section>';D.innerHTML=h;return}
   h+='<div class="tblwrap"><table class="cmp"><thead><tr>'+cols.map(([k,l])=>'<th class="sortable" tabindex="0" data-k="'+k+'">'+l+(s.k===k?(s.dir>0?" ▲":" ▼"):"")+'</th>').join("")+'</tr></thead><tbody>';
   rows.forEach(r=>{h+='<tr data-id="'+esc(r.id)+'"><td>'+esc(r.name)+'</td><td>'+r.cur+'</td><td>'+r.status+'</td><td><span class="dot '+(VCLS[r.m.verdict.lvl]||"")+'" style="display:inline-block;margin-right:6px"></span>'+r.vl+'</td><td>'+fmtN.format(r.orders)+'</td><td>'+fU(r.ads)+'</td><td>'+fU(r.cpa)+'</td><td>'+(isFinite(r.roas)?r.roas.toFixed(2)+"x":"—")+'</td><td>'+pct(r.ship,0)+'</td><td>'+(isFinite(r.be)?(r.be>1?"&gt;100%":pct(r.be,0)):"—")+'</td><td class="'+cls(r.exp)+'">'+fU(r.exp)+' <span style="color:var(--muted);font-size:11px">('+pct(r.expP,0)+')</span></td><td class="'+cls(r.p70)+'">'+fU(r.p70)+'</td><td class="'+cls(r.p80)+'">'+fU(r.p80)+'</td><td>'+pct(r.real,0)+'</td><td class="'+cls(r.realP)+'">'+fU(r.realP)+'</td></tr>'});
   h+='</tbody></table></div><p class="note">Tocá un producto para abrir su ficha. Tocá un encabezado para ordenar.</p></section>';
@@ -626,7 +657,7 @@ function mountDetail(){
   const D=$("#detail"); D.innerHTML="";
   const t=st.tests.get(st.sel);
   if(!t){
-    D.innerHTML='<div class="panel empty"><h2>'+(st.mode==="loading"?"Cargando testeos…":"Todavía no hay testeos")+'</h2><p>'+(st.mode==="loading"?"":"Creá el primero con “Nuevo testeo” y cargá costos, gasto en ads y resultados para ver el diagnóstico y los escenarios de entrega.")+'</p></div>';
+    D.innerHTML='<div class="panel empty"><h2>'+(st.mode==="loading"?"Cargando productos…":"Todavía no hay productos")+'</h2><p>'+(st.mode==="loading"?"":"Creá el primero con “Nuevo producto” y cargá costos, gasto en ads y resultados para ver el diagnóstico y los escenarios de entrega.")+'</p></div>';
     return;
   }
   D.appendChild($("#tplDetail").content.cloneNode(true));
@@ -644,6 +675,7 @@ function mountDetail(){
   $("#btnDup").onclick=()=>{const src=st.tests.get(st.sel);const c=JSON.parse(JSON.stringify(src));Object.assign(c,{name:(src.name||"")+" (copia)",date:today(),example:false,updatedAt:Date.now()});const id=newId();st.tests.set(id,c);st.sel=id;schedule(id);renderAll(true)};
   $("#btnDel").onclick=()=>{st.confirmDel=true;renderConfirm()};
   $("#btnPdf").onclick=()=>downloadPdf();
+  $("#btnImp").onclick=impOpen;
   $("#dayAdd").onclick=()=>{const cur=st.tests.get(st.sel);if(!Array.isArray(cur.daily))cur.daily=[];
     const last=cur.daily[cur.daily.length-1];let d=today();
     if(last&&last.d){const x=new Date(last.d+"T12:00:00");x.setDate(x.getDate()+1);d=x.toISOString().slice(0,10)}
@@ -688,7 +720,7 @@ function renderConfirm(){
   $("#btnDel").hidden=st.confirmDel;
   if(st.confirmDel){
     const c=document.createElement("div"); c.className="confirm";
-    c.innerHTML='<span>¿Eliminar este testeo? No se puede deshacer.</span>';
+    c.innerHTML='<span>¿Eliminar este producto? No se puede deshacer.</span>';
     const y=document.createElement("button");y.className="btn danger";y.type="button";y.textContent="Sí, eliminar";
     const no=document.createElement("button");no.className="btn";no.type="button";no.textContent="Cancelar";
     y.onclick=async()=>{const id=st.sel;st.confirmDel=false;await removeTest(id);st.sel=(sorted()[0]||[])[0]||null;renderAll(true)};
@@ -748,7 +780,7 @@ function renderNumbers(){
   $("#packBox").hidden=!t.packs; $("#f-cost").disabled=!!t.packs;
   $("#costEq").textContent=t.packs?"Ponderado por packs: "+mx(m.cost)+" / "+us(m.cost,fx):"≈ "+us(n(t.cost),fx);
   if(t.packs){const W=[1,2,3].reduce((a,i)=>a+n(t["pk"+i+"m"]),0);$("#packEq").textContent=W>0?"Costo promedio por pedido "+mx(m.cost)+" · ticket promedio "+mx(m.aov)+(Math.round(W)!==100?" · los % suman "+Math.round(W)+"% (se reparten en proporción)":""):"Cargá el % de ventas de cada pack"}
-  $("#fixedEq").textContent=n(t.fixedMonth)>0?"≈ "+us(n(t.fixedMonth),fx)+" · en este testeo ("+m.days+" días): "+mx(m.fixTest):"";
+  $("#fixedEq").textContent=n(t.fixedMonth)>0?"≈ "+us(n(t.fixedMonth),fx)+" · en este período ("+m.days+" días): "+mx(m.fixTest):"";
   // totales del registro diario
   ["ads","impr","clicks","visits","orders","days"].forEach(k=>{const el=$("#f-"+k);if(!el)return;el.disabled=T.fromDaily;if(T.fromDaily)el.value=Math.round(T[k]*100)/100;else if(document.activeElement!==el)el.value=has(t[k])?t[k]:""});
   $("#daysEq").textContent=T.fromDaily?"Según el registro diario":"";
@@ -837,7 +869,7 @@ function renderNumbers(){
   const sp=(id,v)=>{const el=$(id);if(el&&document.activeElement!==el)el.placeholder=v};
   sp("#f-simAds",isFinite(m.adsDay)&&fx>0&&m.adsDay>0?(m.adsDay/fx).toFixed(0):"50");
   sp("#f-simCpa",isFinite(m.cpa)&&fx>0?(m.cpa/fx).toFixed(2):"");
-  if(!SI.o)SO.innerHTML='<div style="grid-column:1/-1;background:none;padding:0"><span class="eq">Cargá un gasto diario y un CPA (o completá el testeo) para simular.</span></div>';
+  if(!SI.o)SO.innerHTML='<div style="grid-column:1/-1;background:none;padding:0"><span class="eq">Cargá un gasto diario y un CPA (o cargá los datos del producto) para simular.</span></div>';
   else{const o=SI.o, box=(k,v,u,cls)=>'<div><div class="k">'+k+'</div><div class="v '+(cls||"")+'">'+v+'</div><div class="u">'+(u||"&nbsp;")+'</div></div>';
     SO.innerHTML=box("Resultados",fmtN.format(SI.ord),fmtN.format(o.sent)+" enviados · "+fmtN.format(o.del)+" entregados")+
       box("Gasto en ads",mx(o.ads),us(o.ads,fx)+" en "+SI.days+" días")+
@@ -849,6 +881,288 @@ function renderNumbers(){
 }
 function renderAll(remount){renderList(); if(remount)mountDetail(); else if(st.view==="compare")renderCompare(); else renderNumbers(); checkBackup()}
 
+/* ---------- Importar datos (Meta, Shopify, plataforma COD) ---------- */
+const normH=s=>String(s==null?"":s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\s+/g," ").trim();
+const IMP={
+  meta:{label:"Meta Ads (export por día)",hint:"En el Administrador de anuncios: Desglose → Por tiempo → Día. Exportá en CSV o Excel con las columnas Día, Importe gastado, Impresiones, Clics en el enlace, Visitas a la página de destino y Resultados.",
+    fields:[["date","Día",["dia","day","fecha","inicio del informe","reporting starts"],1],["ads","Importe gastado",["importe gastado","amount spent","gasto"],1],["impr","Impresiones",["impresiones","impressions"]],["clicks","Clics en el enlace",["clics en el enlace","link clicks","clics (todos)","clicks (all)","clics","clicks"]],["visits","Visitas a la landing",["visitas a la pagina de destino","landing page views","vistas de la pagina de destino"]],["orders","Resultados",["resultados","results","compras","purchases","clientes potenciales","leads"],1]],
+    imgHint:"Sacá una captura del Administrador de anuncios con las columnas de gasto, impresiones, clics y resultados (filtrada por la campaña del producto). Si querés llenar el registro diario, usá Desglose → Por tiempo → Día.",
+    filter:["nombre de la campana","campaign name","nombre del conjunto de anuncios","ad set name","nombre del anuncio","ad name"]},
+  shop:{label:"Shopify (export de pedidos)",hint:"En Shopify: Pedidos → Exportar → CSV. Filtrá por el producto para contar solo sus pedidos.",
+    fields:[["id","Pedido",["name","nombre","pedido","order"],1],["total","Total",["total"],1],["date","Fecha",["created at","creado el","fecha","created"]]],
+    imgHint:"Sacá una captura de la lista de pedidos filtrada por el producto, o del informe de ventas con pedidos y ventas totales.",
+    filter:["lineitem name","nombre del articulo","articulo","producto","product"]},
+  cod:{label:"Plataforma COD (Dropi, etc.)",hint:"Exportá tus pedidos de la plataforma con la columna de estado. Después elegís qué estado cuenta como entregado, devuelto o en tránsito.",
+    fields:[["status","Estado",["estatus","estado","status"],1],["id","Pedido o guía",["numero de guia","guia","id","orden","pedido","order"]]],
+    imgHint:"Sacá una captura del resumen de estados de tu plataforma (entregados, devueltos, en tránsito) o de la lista de pedidos del producto.",
+    filter:["producto","product","nombre producto","articulo"]},
+};
+const imp={type:"meta",src:"file",imgs:[],ai:null,rows:null,head:[],map:{},fcol:"",ftext:"",stMap:{}};
+function parseNum(v){
+  if(typeof v==="number")return v; let s=String(v==null?"":v).replace(/[^\d,.\-]/g,""); if(!s)return 0;
+  const c=s.lastIndexOf(","),d=s.lastIndexOf(".");
+  if(c>-1&&d>-1)s=c>d?s.replace(/\./g,"").replace(",","."):s.replace(/,/g,"");
+  else if(c>-1)s=/^-?\d{1,3}(,\d{3})+$/.test(s)?s.replace(/,/g,""):s.replace(",",".");
+  else if(d>-1&&/^-?\d{1,3}(\.\d{3})+$/.test(s))s=s.replace(/\./g,"");
+  const x=parseFloat(s); return isFinite(x)?x:0;
+}
+function parseDate(v){
+  if(v instanceof Date&&!isNaN(v)){const x=new Date(v.getTime()+6*36e5);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0")}
+  if(typeof v==="number"&&v>20000&&v<80000){const d=new Date(Math.round((v-25569)*864e5));return d.toISOString().slice(0,10)}
+  const s=String(v==null?"":v).trim(); let m;
+  if((m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)))return m[1]+"-"+m[2].padStart(2,"0")+"-"+m[3].padStart(2,"0");
+  if((m=s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/))){let a=+m[1],b=+m[2],y=m[3].length===2?"20"+m[3]:m[3];if(b>12){const t=a;a=b;b=t}return y+"-"+String(b).padStart(2,"0")+"-"+String(a).padStart(2,"0")}
+  return "";
+}
+function guessCol(head,syn){
+  const H=head.map(normH);
+  for(const s of syn){const i=H.findIndex(h=>h===s);if(i>-1)return head[i]}
+  for(const s of syn){const i=H.findIndex(h=>h.includes(s));if(i>-1)return head[i]}
+  return "";
+}
+function guessStatus(s){const x=normH(s);
+  if(/cancel|anulad|no confirm|pendiente de confirm|sin confirm/.test(x))return"skip";
+  if(/devol|devuelt|rechaz|rehus|return|retorn|no entreg/.test(x))return"ret";
+  if(/entregad|delivered|finalizad|completad/.test(x))return"del";
+  return"tr";
+}
+function impOpen(){
+  if(!st.tests.get(st.sel))return;
+  if(typeof XLSX==="undefined"){setSave("No se pudo cargar el lector de archivos. Revisá tu conexión.");return}
+  imp.rows=null;imp.head=[];imp.imgs=[];imp.ai=null;$("#impFile").value="";$("#impImg").value="";renderThumbs();$("#impOv").hidden=false;impRender();$("#impType").focus();
+}
+function impClose(){$("#impOv").hidden=true}
+async function impLoad(f){
+  try{
+    const buf=await f.arrayBuffer(); let wb;
+    if(/\.(csv|txt)$/i.test(f.name)||/csv|text/.test(f.type)){
+      let txt=new TextDecoder("utf-8").decode(buf); if(txt.includes("\uFFFD"))txt=new TextDecoder("windows-1252").decode(buf);
+      txt=txt.replace(/^\uFEFF/,"");
+      wb=XLSX.read(txt,{type:"string",raw:true});
+    }else wb=XLSX.read(buf,{type:"array",cellDates:true});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const raw=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:""});
+    let hi=raw.findIndex(r=>r.filter(c=>String(c).trim()!=="").length>=2); if(hi<0)throw 0;
+    imp.head=raw[hi].map((h,i)=>String(h).trim()||("Columna "+(i+1)));
+    imp.rows=raw.slice(hi+1).filter(r=>r.some(c=>String(c).trim()!=="")).map(r=>Object.fromEntries(imp.head.map((h,i)=>[h,r[i]])));
+    impAutomap(); impRender();
+  }catch(e){imp.rows=null;$("#impSum").innerHTML='<span class="neg">No pude leer ese archivo. Probá exportarlo de nuevo en CSV o Excel.</span>'}
+}
+function impAutomap(){
+  const C=IMP[imp.type]; imp.map={};
+  C.fields.forEach(([k,,syn])=>imp.map[k]=guessCol(imp.head,syn));
+  imp.fcol=guessCol(imp.head,C.filter);
+  const t=st.tests.get(st.sel); if(t&&!imp.ftext)imp.ftext=(t.name||"").split(/\s+/)[0]||"";
+  imp.stMap={};
+}
+function impFiltered(){
+  if(!imp.rows)return[];
+  const q=normH(imp.ftext); if(!q||!imp.fcol)return imp.rows;
+  return imp.rows.filter(r=>normH(r[imp.fcol]).includes(q));
+}
+function impCompute(){
+  const C=IMP[imp.type], R=impFiltered(), M=imp.map;
+  if(C.fields.some(([k,,,req])=>req&&!M[k]))return{err:"Elegí la columna de "+C.fields.filter(([k,,,req])=>req&&!M[k]).map(f=>f[1]).join(", ")+"."};
+  if(!R.length)return{err:"Ninguna fila coincide con el filtro."};
+  if(imp.type==="meta"){
+    const by={}; let cur="";
+    const sh=String(M.ads||""); const cm=sh.match(/\(([A-Z]{3})\)/); if(cm)cur=cm[1];
+    R.forEach(r=>{const d=parseDate(r[M.date]);if(!d)return;const o=by[d]||(by[d]={d,ads:0,impr:0,clicks:0,visits:0,orders:0});
+      o.ads+=parseNum(r[M.ads]);if(M.impr)o.impr+=parseNum(r[M.impr]);if(M.clicks)o.clicks+=parseNum(r[M.clicks]);if(M.visits)o.visits+=parseNum(r[M.visits]);o.orders+=parseNum(r[M.orders])});
+    const days=Object.values(by).sort((a,b)=>a.d.localeCompare(b.d)).map(o=>({...o,ads:Math.round(o.ads*100)/100}));
+    if(!days.length)return{err:"No encontré fechas válidas en la columna de día."};
+    const tot=days.reduce((a,o)=>({ads:a.ads+o.ads,orders:a.orders+o.orders}),{ads:0,orders:0});
+    return{days,cur,tot,rows:R.length};
+  }
+  if(imp.type==="shop"){
+    const seen=new Map();
+    R.forEach(r=>{const id=String(r[M.id]).trim();if(!id)return;const tv=parseNum(r[M.total]);if(!seen.has(id)||(!seen.get(id)&&tv))seen.set(id,tv)});
+    const cnt=seen.size, total=[...seen.values()].reduce((a,b)=>a+b,0);
+    if(!cnt)return{err:"No encontré pedidos en la columna elegida."};
+    return{cnt,total,aov:total/cnt,rows:R.length};
+  }
+  const seen=new Set(), counts={};
+  R.forEach(r=>{if(M.id){const id=String(r[M.id]).trim();if(id){if(seen.has(id))return;seen.add(id)}}const s=String(r[M.status]==null?"":r[M.status]).trim()||"(vacío)";counts[s]=(counts[s]||0)+1});
+  Object.keys(counts).forEach(s=>{if(!imp.stMap[s])imp.stMap[s]=guessStatus(s)});
+  const agg={del:0,ret:0,tr:0,skip:0}; Object.entries(counts).forEach(([s,c])=>agg[imp.stMap[s]]+=c);
+  return{counts,agg,rows:R.length};
+}
+function impRender(){
+  const C=IMP[imp.type], t=st.tests.get(st.sel);
+  $("#impType").value=imp.type;
+  const canImg=MODE==="public"||!!st.sampleImg; if(!canImg)imp.src="file";
+  $("#impSrc").hidden=!canImg;
+  $("#impSrc").querySelectorAll("[data-src]").forEach(b=>b.classList.toggle("on",b.dataset.src===imp.src));
+  $("#impFileRow").hidden=imp.src!=="file"; $("#impImgRow").hidden=imp.src!=="img";
+  $("#impHint").textContent=imp.src==="img"?C.imgHint:C.hint;
+  const B=$("#impMap");
+  if(imp.src==="img"){
+    if(imp.ai){aiRenderReview();return}
+    B.innerHTML="";$("#impApply").disabled=true;
+    $("#impSum").innerHTML='<span class="eq">'+(imp.imgs.length?"Tocá “Leer captura”.":"Subí o pegá una captura de pantalla.")+'</span>';return;
+  }
+  if(!imp.rows){B.innerHTML="";$("#impSum").innerHTML='<span class="eq">Elegí el archivo exportado.</span>';$("#impApply").disabled=true;return}
+  const opt=sel=>'<option value="">— ninguna —</option>'+imp.head.map(h=>'<option'+(h===sel?" selected":"")+'>'+esc(h)+'</option>').join("");
+  let h='<div class="fields">'+C.fields.map(([k,l,,req])=>'<label class="f"><span class="lbl">'+l+(req?" *":"")+'</span><select data-map="'+k+'">'+opt(imp.map[k])+'</select></label>').join("")+'</div>';
+  h+='<div class="fields" style="margin-top:10px"><label class="f"><span class="lbl">Filtrar por columna</span><select id="impFcol">'+opt(imp.fcol)+'</select></label><label class="f"><span class="lbl">Que contenga</span><input id="impFtext" type="text" value="'+esc(imp.ftext)+'" placeholder="Nombre de campaña o producto"></label></div>';
+  B.innerHTML=h;
+  B.querySelectorAll("[data-map]").forEach(s=>s.onchange=()=>{imp.map[s.dataset.map]=s.value;impSummary()});
+  $("#impFcol").onchange=e=>{imp.fcol=e.target.value;impSummary()};
+  $("#impFtext").oninput=e=>{imp.ftext=e.target.value;impSummary()};
+  impSummary();
+}
+function impSummary(){
+  const r=impCompute(), O=$("#impSum"), t=st.tests.get(st.sel); CUR=t.cur||"MXN";
+  $("#impApply").disabled=!!r.err; imp.last=r;
+  if(r.err){O.innerHTML='<span class="neg">'+esc(r.err)+'</span>';return}
+  if(imp.type==="meta"){
+    O.innerHTML='<b>'+r.days.length+' días</b> ('+esc(r.days[0].d)+' a '+esc(r.days[r.days.length-1].d)+') de '+r.rows+' filas · gasto '+fmtN.format(r.tot.ads)+' '+(r.cur||"(moneda de la cuenta)")+' · '+fmtN.format(r.tot.orders)+' resultados.<br><span class="eq">Reemplaza esos días en el registro diario y conserva los demás.'+(r.cur&&r.cur!=="USD"&&r.cur!==CUR?" Ojo: el gasto está en "+r.cur+" y el producto en "+CUR+".":"")+'</span>';
+  }else if(imp.type==="shop"){
+    O.innerHTML='<b>'+fmtN.format(r.cnt)+' pedidos</b> · ventas '+mx(r.total)+' · ticket promedio '+mx(r.aov)+'<br><span class="eq">Completa “Ventas totales” y “Valor medio del pedido”. Los montos se toman en '+CUR+'.</span>';
+  }else{
+    const L={del:"Entregado",ret:"Devuelto",tr:"En tránsito",skip:"No contar"};
+    O.innerHTML='<div class="sttbl">'+Object.entries(r.counts).sort((a,b)=>b[1]-a[1]).map(([s,c])=>'<div class="str"><span>'+esc(s)+' <b>('+c+')</b></span><select data-st="'+esc(s)+'">'+Object.entries(L).map(([k,l])=>'<option value="'+k+'"'+(imp.stMap[s]===k?" selected":"")+'>'+l+'</option>').join("")+'</select></div>').join("")+'</div>'+
+      '<p style="margin:8px 0 0"><b>'+r.agg.del+' entregados · '+r.agg.ret+' devueltos · '+r.agg.tr+' en tránsito</b>'+(r.agg.skip?' · '+r.agg.skip+' sin contar':'')+'</p><span class="eq">Completa el “Resultado real”.</span>';
+    O.querySelectorAll("[data-st]").forEach(s=>s.onchange=()=>{imp.stMap[s.dataset.st]=s.value;impSummary()});
+  }
+}
+function impApply(){
+  const r=imp.last, t=st.tests.get(st.sel); if(!r||r.err||!t)return;
+  if(r.totalsOnly){
+    const T=r.tot; t.ads=T.ads; t.impr=T.impr; t.clicks=T.clicks; t.visits=T.visits; t.orders=T.orders;
+    if(r.cur==="USD")t.adsCur="USD"; else if(r.cur)t.adsCur="MXN";
+    setSave("Datos de Meta importados");
+  }else if(imp.type==="meta"){
+    if(!Array.isArray(t.daily))t.daily=[];
+    const newDays=new Set(r.days.map(o=>o.d)), others=t.daily.filter(x=>!newDays.has(x.d));
+    const loc=t.cur||"MXN", fileUsd=r.cur==="USD"||(r.cur===loc&&loc==="USD"), fileLoc=r.cur&&r.cur===loc&&loc!=="USD";
+    let k=1;
+    if(!others.length){if(fileUsd)t.adsCur="USD";else if(fileLoc)t.adsCur="MXN"}
+    else{const fx=(t.cur||"MXN")==="USD"?1:n(t.fx)||1, curUsd=t.adsCur==="USD"||!t.adsCur;
+      if(fileUsd&&!curUsd)k=fx; else if(fileLoc&&curUsd)k=1/fx}
+    const by=new Map(others.map(x=>[x.d,x]));
+    r.days.forEach(o=>by.set(o.d,{d:o.d,ads:Math.round(o.ads*k*100)/100,impr:o.impr,clicks:o.clicks,visits:o.visits,orders:o.orders}));
+    t.daily=[...by.values()].sort((a,b)=>String(a.d).localeCompare(String(b.d)));
+    setSave(r.days.length+" días importados de Meta");
+  }else if(imp.type==="shop"){
+    t.sales=Math.round(r.total*100)/100; t.aov=Math.round(r.aov*100)/100; setSave(r.cnt+" pedidos importados de Shopify");
+  }else{
+    t.realDel=r.agg.del; t.realRet=r.agg.ret; t.realTr=r.agg.tr; setSave("Resultado real importado");
+  }
+  touch(t); schedule(st.sel); impClose(); renderAll(true);
+}
+$("#impType").onchange=e=>{imp.type=e.target.value;imp.ai=null;if(imp.rows)impAutomap();impRender()};
+$("#impSrc").querySelectorAll("[data-src]").forEach(b=>b.onclick=()=>{imp.src=b.dataset.src;impRender()});
+$("#impImg").onchange=e=>{addImgs(e.target.files);e.target.value=""};
+$("#impRead").onclick=aiRead;
+document.addEventListener("paste",e=>{if($("#impOv").hidden||imp.src!=="img")return;const fs=[...(e.clipboardData&&e.clipboardData.files||[])];if(fs.length){e.preventDefault();addImgs(fs)}});
+$("#impFile").onchange=e=>{const f=e.target.files[0];if(f)impLoad(f)};
+$("#impCancel").onclick=impClose; $("#impX").onclick=impClose;
+$("#impApply").onclick=impApply;
+$("#impOv").addEventListener("click",e=>{if(e.target.id==="impOv")impClose()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#impOv").hidden)impClose()});
+
+/* ---------- Leer capturas con IA ---------- */
+const AI_PROMPTS={"meta": "These are screenshots from Meta Ads Manager (Facebook/Instagram ads) for one product. Today is {HOY}. Extract the advertising metrics.\nReply with only JSON in this shape: {\"currency\": \"3-letter code of the money amounts if visible, else null\", \"days\": [{\"date\": \"YYYY-MM-DD\", \"spend\": 0, \"impressions\": 0, \"link_clicks\": 0, \"landing_page_views\": 0, \"results\": 0}], \"totals\": {\"spend\": 0, \"impressions\": 0, \"link_clicks\": 0, \"landing_page_views\": 0, \"results\": 0}, \"notes\": \"one short sentence in Spanish about anything unclear, or empty\"}.\nRules: fill \"days\" only when the screenshot shows a breakdown with one row per date; otherwise use an empty array. \"totals\" is the total/summary row when shown, otherwise the sum of the rows you can see (if several campaigns or ad sets appear without a total row, add them up). spend = \"Importe gastado\" / \"Amount spent\". link_clicks = \"Clics en el enlace\" / \"Link clicks\" (use all clicks only if that is the only clicks column). landing_page_views = \"Visitas a la página de destino\" / \"Landing page views\". results = \"Resultados\" / \"Results\" / \"Compras\" / \"Purchases\". Use null for any metric that is not visible. Write numbers as plain JSON numbers without thousands separators, reading the locale correctly (in \"1.234,56\" the comma is the decimal separator). A date without year takes the year of today and is never in the future.", "shop": "These are screenshots from Shopify (an orders list, or a sales / analytics report) for one product. Today is {HOY}.\nReply with only JSON in this shape: {\"currency\": \"3-letter code if visible, else null\", \"orders\": 0, \"sales\": 0, \"aov\": 0, \"notes\": \"one short sentence in Spanish about anything unclear, or empty\"}.\nRules: for an orders list, count the distinct orders you can see and add up their totals. For a report, use its total orders and total (or gross) sales, and its average order value if shown. Use null for anything not visible. Write numbers as plain JSON numbers without thousands separators, reading the locale correctly (in \"1.234,56\" the comma is the decimal separator).", "cod": "These are screenshots from a cash-on-delivery logistics platform (for example Dropi) showing orders and their delivery status for one product. Today is {HOY}.\nGroup every order into: delivered (entregado, delivered, finalizado), returned (devolución, devuelto, rechazado, rehusado, no entregado, retornado), in_transit (en tránsito, en reparto, en camino, guía generada, despachado, en bodega, novedad, en oficina), cancelled (cancelado, anulado, pendiente de confirmación: orders that were never shipped).\nReply with only JSON in this shape: {\"delivered\": 0, \"returned\": 0, \"in_transit\": 0, \"cancelled\": 0, \"statuses\": [{\"name\": \"status as written\", \"count\": 0, \"group\": \"delivered|returned|in_transit|cancelled\"}], \"notes\": \"one short sentence in Spanish about anything unclear, or empty\"}.\nRules: if the screenshot shows a summary with a count per status, use those counts. If it shows a list of orders, count each order once. Write numbers as plain JSON numbers."};
+const numAI=v=>v==null||v===""?0:parseNum(v);
+async function toJpegB64(file){
+  const bmp=await createImageBitmap(file); const k=Math.min(1,1600/Math.max(bmp.width,bmp.height));
+  const c=document.createElement("canvas"); c.width=Math.round(bmp.width*k); c.height=Math.round(bmp.height*k);
+  c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);
+  const b=await new Promise(r=>c.toBlob(r,"image/jpeg",.88)); const u8=new Uint8Array(await b.arrayBuffer());
+  let s=""; for(let i=0;i<u8.length;i+=0x8000)s+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));
+  return{media_type:"image/jpeg",data:btoa(s)};
+}
+async function aiExtract(type,files){
+  if(MODE==="artifact"){
+    if(!st.sample)throw{msg:"La lectura de capturas no está disponible en esta vista."};
+    try{return await st.sample.json(AI_PROMPTS[type].replace("{HOY}",today()),{images:files})}
+    catch(e){const c=e&&e.code;throw{msg:c==="not_granted"?"Para leer capturas tenés que permitir que la página use Claude.":c==="rate_limited"?"Demasiadas lecturas seguidas. Esperá un momento y probá de nuevo.":c==="image_rejected"?"No pude abrir esa imagen. Probá con otra captura en PNG o JPG.":c==="images_unavailable"?"Esta vista no puede enviar imágenes.":"No pude leer la captura. Probá de nuevo o con una imagen más nítida."}}
+  }
+  let images; try{images=await Promise.all(files.map(toJpegB64))}catch(e){throw{msg:"No pude abrir esa imagen. Probá con otra captura en PNG o JPG."}}
+  let r; try{r=await fetch("/api/extraer",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type,images})})}catch(e){throw{msg:"No hay conexión con el servidor. Revisá tu internet."}}
+  let j={}; try{j=await r.json()}catch(e){}
+  if(!r.ok)throw{msg:j.error||(r.status===404?"La lectura de capturas todavía no está activada en este sitio.":"No pude leer la captura. Probá de nuevo.")};
+  return j.data;
+}
+function aiToReview(type,d){
+  d=d&&typeof d==="object"?d:{};
+  const notes=typeof d.notes==="string"?d.notes:"";
+  if(type==="meta"){
+    const days=(Array.isArray(d.days)?d.days:[]).map(x=>({d:parseDate(x&&x.date)||"",ads:numAI(x.spend),impr:numAI(x.impressions),clicks:numAI(x.link_clicks),visits:numAI(x.landing_page_views),orders:numAI(x.results)})).filter(x=>x.d);
+    const T=d.totals||{};
+    return{days,tot:{ads:numAI(T.spend),impr:numAI(T.impressions),clicks:numAI(T.link_clicks),visits:numAI(T.landing_page_views),orders:numAI(T.results)},cur:String(d.currency||"").toUpperCase().slice(0,3),date:"",notes};
+  }
+  if(type==="shop"){const o=numAI(d.orders),s=numAI(d.sales);return{cnt:o,total:s,aov:numAI(d.aov)||(o?s/o:0),notes}}
+  return{agg:{del:numAI(d.delivered),ret:numAI(d.returned),tr:numAI(d.in_transit),skip:numAI(d.cancelled)},statuses:Array.isArray(d.statuses)?d.statuses:[],notes};
+}
+function aiLast(){
+  const a=imp.ai, t=st.tests.get(st.sel); if(!a||!t)return{err:"Leé una captura primero."};
+  if(imp.type==="meta"){
+    const cur=a.cur==="USD"?"USD":a.cur?(t.cur||"MXN"):"";
+    if(a.days.length)return{days:a.days.filter(x=>x.d),cur,ai:true};
+    if(a.date)return{days:[{d:a.date,...a.tot}],cur,ai:true};
+    if(Array.isArray(t.daily)&&t.daily.length)return{err:"Este producto usa registro diario: poné la fecha de estos datos."};
+    return{totalsOnly:true,tot:a.tot,cur,ai:true};
+  }
+  if(imp.type==="shop")return a.cnt>0?{cnt:a.cnt,total:a.total,aov:a.cnt?a.total/a.cnt:0,ai:true}:{err:"Falta la cantidad de pedidos."};
+  return{agg:a.agg,ai:true};
+}
+function aiRenderReview(){
+  const a=imp.ai, B=$("#impMap"), t=st.tests.get(st.sel); CUR=t.cur||"MXN";
+  const inp=(path,v,ty)=>'<input type="'+(ty||"number")+'" data-ai="'+path+'" value="'+esc(v)+'"'+(ty?'':' step="any" min="0"')+'>';
+  let h="";
+  if(imp.type==="meta"){
+    h+='<div class="fields"><label class="f"><span class="lbl">Moneda del gasto</span><select data-ai="cur"><option value="USD"'+(a.cur==="USD"?" selected":"")+'>USD</option><option value="'+CUR+'"'+(a.cur&&a.cur!=="USD"?" selected":"")+'>'+CUR+'</option></select></label>';
+    if(!a.days.length)h+='<label class="f"><span class="lbl">Fecha (opcional)</span>'+inp("date",a.date,"date")+'</label>';
+    h+='</div>';
+    if(a.days.length){
+      h+='<div class="tblwrap" style="margin-top:10px"><table class="daily"><thead><tr><th>Fecha</th><th>Gasto</th><th>Impresiones</th><th>Clics</th><th>Visitas</th><th>Resultados</th></tr></thead><tbody>'+
+        a.days.map((x,i)=>'<tr><td>'+inp("days."+i+".d",x.d,"date")+'</td><td>'+inp("days."+i+".ads",x.ads)+'</td><td>'+inp("days."+i+".impr",x.impr)+'</td><td>'+inp("days."+i+".clicks",x.clicks)+'</td><td>'+inp("days."+i+".visits",x.visits)+'</td><td>'+inp("days."+i+".orders",x.orders)+'</td></tr>').join("")+'</tbody></table></div>';
+    }else{
+      h+='<div class="fields" style="margin-top:10px"><label class="f"><span class="lbl">Gasto</span>'+inp("tot.ads",a.tot.ads)+'</label><label class="f"><span class="lbl">Impresiones</span>'+inp("tot.impr",a.tot.impr)+'</label><label class="f"><span class="lbl">Clics en el enlace</span>'+inp("tot.clicks",a.tot.clicks)+'</label><label class="f"><span class="lbl">Visitas a la landing</span>'+inp("tot.visits",a.tot.visits)+'</label><label class="f"><span class="lbl">Resultados</span>'+inp("tot.orders",a.tot.orders)+'</label></div>';
+    }
+  }else if(imp.type==="shop"){
+    h+='<div class="fields"><label class="f"><span class="lbl">Pedidos</span>'+inp("cnt",a.cnt)+'</label><label class="f"><span class="lbl">Ventas totales · '+CUR+'</span>'+inp("total",a.total)+'</label></div>';
+  }else{
+    h+='<div class="fields"><label class="f"><span class="lbl">Entregados</span>'+inp("agg.del",a.agg.del)+'</label><label class="f"><span class="lbl">Devueltos / rehusados</span>'+inp("agg.ret",a.agg.ret)+'</label><label class="f"><span class="lbl">En tránsito</span>'+inp("agg.tr",a.agg.tr)+'</label><label class="f"><span class="lbl">Cancelados (no cuentan)</span>'+inp("agg.skip",a.agg.skip)+'</label></div>';
+    if(a.statuses.length)h+='<p class="note">Estados leídos: '+a.statuses.map(s=>esc(s&&s.name)+" ("+esc(s&&s.count)+")").join(" · ")+'</p>';
+  }
+  B.innerHTML=h;
+  B.querySelectorAll("[data-ai]").forEach(el=>el.addEventListener(el.tagName==="SELECT"?"change":"input",()=>{
+    const p=el.dataset.ai.split("."); let o=imp.ai; for(let i=0;i<p.length-1;i++)o=o[p[i]];
+    const k=p[p.length-1]; o[k]=el.type==="number"?parseNum(el.value):el.value;
+    aiSummary();
+  }));
+  aiSummary();
+}
+function aiSummary(){
+  const r=aiLast(), O=$("#impSum"); imp.last=r; $("#impApply").disabled=!!r.err;
+  const note=imp.ai&&imp.ai.notes?'<br><span class="eq">Nota de la lectura: '+esc(imp.ai.notes)+'</span>':'';
+  if(r.err){O.innerHTML='<span class="neg">'+esc(r.err)+'</span>'+note;return}
+  let msg;
+  if(imp.type==="meta")msg=r.totalsOnly?"Completa los totales del embudo de este producto.":(r.days.length+(r.days.length===1?" día":" días")+" para el registro diario (reemplaza esas fechas y conserva las demás).");
+  else if(imp.type==="shop")msg=fmtN.format(r.cnt)+" pedidos · ticket promedio "+mx(r.aov)+". Completa “Ventas totales” y “Valor medio del pedido”.";
+  else msg=r.agg.del+" entregados · "+r.agg.ret+" devueltos · "+r.agg.tr+" en tránsito. Completa el “Resultado real”.";
+  O.innerHTML='<b>Revisá los números antes de importar:</b> la lectura con IA puede confundir algún dato.<br>'+esc(msg)+note;
+}
+function renderThumbs(){
+  const T=$("#impThumbs"); if(!T)return;
+  T.innerHTML=imp.imgs.map((f,i)=>'<span class="thumb">'+esc(f.name||("Captura "+(i+1)))+' <button type="button" class="btn sm" data-rmimg="'+i+'" aria-label="Quitar">×</button></span>').join("");
+  T.querySelectorAll("[data-rmimg]").forEach(b=>b.onclick=()=>{imp.imgs.splice(+b.dataset.rmimg,1);renderThumbs()});
+  $("#impRead").disabled=!imp.imgs.length;
+}
+function addImgs(list){
+  const fs=[...list].filter(f=>/^image\//.test(f.type)); if(!fs.length)return;
+  imp.imgs=imp.imgs.concat(fs).slice(0,3); imp.ai=null; renderThumbs(); impRender();
+}
+async function aiRead(){
+  if(!imp.imgs.length)return;
+  const b=$("#impRead"); b.disabled=true; b.textContent="Leyendo…"; $("#impSum").innerHTML='<span class="eq">Leyendo la captura, puede tardar unos segundos…</span>';
+  try{const d=await aiExtract(imp.type,imp.imgs); imp.ai=aiToReview(imp.type,d); aiRenderReview()}
+  catch(e){imp.ai=null;$("#impMap").innerHTML="";$("#impSum").innerHTML='<span class="neg">'+esc(e&&e.msg||"No pude leer la captura.")+'</span>';$("#impApply").disabled=true}
+  finally{b.textContent="Leer captura";b.disabled=!imp.imgs.length}
+}
 /* ---------- Descargas ---------- */
 async function saveFile(name,data,mime){
   if(MODE==="artifact"){
@@ -881,13 +1195,13 @@ function buildXlsx(){
   });
   const wb=XLSX.utils.book_new();
   const add=(data,name)=>{if(!data.length)return;const ws=XLSX.utils.json_to_sheet(data);ws["!cols"]=Object.keys(data[0]).map(k=>({wch:Math.max(10,k.length+2)}));XLSX.utils.book_append_sheet(wb,ws,name)};
-  add(A,"Testeos"); add(B,"Escenarios"); add(C,"Registro diario");
+  add(A,"Productos"); add(B,"Escenarios"); add(C,"Registro diario");
   return XLSX.write(wb,{type:"array",bookType:"xlsx"});
 }
 $("#btnXls").onclick=async()=>{
-  if(!st.tests.size){setSave("No hay testeos para descargar");return}
+  if(!st.tests.size){setSave("No hay productos para descargar");return}
   if(typeof XLSX==="undefined"){setSave("No se pudo cargar el generador de Excel. Revisá tu conexión.");return}
-  if(await saveFile("testeos-"+today()+".xlsx",buildXlsx(),"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))setSave("Excel descargado");
+  if(await saveFile("crm-productos-"+today()+".xlsx",buildXlsx(),"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))setSave("Excel descargado");
 };
 function logoData(){
   if(!LOGO_SRC)return Promise.resolve(null);
@@ -905,7 +1219,7 @@ async function buildPdf(t){
   if(lg){const h=30,w=Math.min(160,lg.w*h/lg.h);doc.addImage(lg.d,"PNG",M,y,w,h)}
   else{doc.setFont("helvetica","bold");doc.setFontSize(14);doc.setTextColor(...G);doc.text("EcomMastery VIP",M,y+20)}
   doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(110);
-  doc.text("CRM de Testeos  ·  Reporte del "+today(),W-M,y+12,{align:"right"});
+  doc.text("CRM de Productos  ·  Reporte del "+today(),W-M,y+12,{align:"right"});
   doc.setDrawColor(...G);doc.setLineWidth(1.2);doc.line(M,y+40,W-M,y+40);
   y+=64;
   doc.setTextColor(20);doc.setFont("helvetica","bold");doc.setFontSize(20);doc.text(t.name||"Sin nombre",M,y);
@@ -930,12 +1244,12 @@ async function buildPdf(t){
   if(n(t.other)>0)costs.push(["Administrativos (por resultado)",...c(n(t.other))]);
   if(m.tax>0)costs.push(["Impuestos",pct(m.tax,1),""]);
   if(m.gw>0)costs.push(["Pasarela u otros",pct(m.gw,1),""]);
-  if(m.fixTest>0)costs.push(["Costos fijos del testeo",...c(m.fixTest)]);
+  if(m.fixTest>0)costs.push(["Costos fijos del período",...c(m.fixTest)]);
   costs.push(["Producto devuelto vuelve a stock",t.recover?"Sí":"No",""]);
   doc.autoTable({startY:y,margin:{left:M},tableWidth:cw,theme:"grid",styles:base,headStyles:head,columnStyles:R,head:[["Costos por pedido",CUR,"USD"]],body:costs});
   const yL=doc.lastAutoTable.finalY;
   doc.autoTable({startY:y,margin:{left:M+cw+20},tableWidth:cw,theme:"grid",styles:base,headStyles:head,columnStyles:R,
-    head:[["Métricas del testeo",CUR,"USD"]],
+    head:[["Métricas del producto",CUR,"USD"]],
     body:[["Gasto en ads",...c(m.adsL)],["Ventas totales",...c(m.sales)],["CPA (por resultado)",...c(m.cpa)],["CPA máximo para empatar",...c(m.beCpa)],["CPM",...c(m.cpm)],["CPC",...c(m.cpc)],
       ["CTR",pct(m.ctr,2),""],["Conversión (resultados / visitas)",pct(m.cr,2),""],["ROAS bruto",isFinite(m.roasB)?m.roasB.toFixed(2)+"x":"—",""],
       ["Impresiones / clics / visitas",fmtN.format(m.T.impr)+" / "+fmtN.format(m.T.clicks)+" / "+fmtN.format(m.T.visits),""],
@@ -985,11 +1299,11 @@ async function buildPdf(t){
   }
   const pages=doc.getNumberOfPages();
   for(let i=1;i<=pages;i++){doc.setPage(i);doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(120);
-    doc.text("Generado con el CRM de Testeos de EcomMastery VIP  ·  ecommasteryvip.com",M,H-20);
+    doc.text("Generado con el CRM de Productos de EcomMastery VIP  ·  ecommasteryvip.com",M,H-20);
     doc.text("Página "+i+" de "+pages,W-M,H-20,{align:"right"})}
   return doc;
 }
-function pdfName(t){return "testeo-"+((t.name||"producto").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"producto")+"-"+today()+".pdf"}
+function pdfName(t){return "crm-"+((t.name||"producto").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"producto")+"-"+today()+".pdf"}
 async function downloadPdf(){
   const t=st.tests.get(st.sel); if(!t)return;
   if(!window.jspdf){setSave("No se pudo cargar el generador de PDF. Revisá tu conexión.");return}
@@ -1000,7 +1314,7 @@ async function downloadPdf(){
 /* ---------- Respaldo (versión pública) ---------- */
 async function doBackup(){
   const data=JSON.stringify({app:"crm-testeos-ecommastery",version:2,tests:Object.fromEntries(st.tests),templates:Object.fromEntries(st.tpls)},null,2);
-  if(await saveFile("respaldo-testeos-"+today()+".json",data,"application/json")){lsSet(LS_BK,Date.now());setSave("Respaldo descargado");checkBackup()}
+  if(await saveFile("respaldo-crm-productos-"+today()+".json",data,"application/json")){lsSet(LS_BK,Date.now());setSave("Respaldo descargado");checkBackup()}
 }
 if($("#btnBackup")){
   $("#btnBackup").onclick=doBackup;
@@ -1011,7 +1325,7 @@ if($("#btnBackup")){
       let k=0; Object.entries(t).forEach(([id,v])=>{if(v&&typeof v==="object"){st.tests.set(id,v);k++}});
       if(o.templates&&typeof o.templates==="object")Object.entries(o.templates).forEach(([id,v])=>{if(v&&v.name)st.tpls.set(id,v)});
       lsSave(); lsSet(LS_TPL,Object.fromEntries(st.tpls)); lsSet(LS_BK,Date.now());
-      st.sel=(sorted()[0]||[])[0]||null; st.view="detail"; renderAll(true); setSave(k+" testeos cargados del respaldo");
+      st.sel=(sorted()[0]||[])[0]||null; st.view="detail"; renderAll(true); setSave(k+" productos cargados del respaldo");
     }catch(err){setSave("Ese archivo no es un respaldo válido del CRM")}
   };
 }
@@ -1022,7 +1336,7 @@ $("#bkLater").onclick=()=>{st.bkLater=true;checkBackup()};
 $("#btnNew").onclick=()=>{const id=newId();st.tests.set(id,blank());st.sel=id;st.view="detail";schedule(id);renderAll(true);const f=$("#f-name");if(f){f.focus();f.select()}};
 $("#btnCmp").onclick=()=>{st.view=st.view==="compare"?"detail":"compare";st.confirmDel=false;renderAll(true)};
 
-function example(){return{...blank(),name:"Producto de ejemplo",notes:"Ficha de ejemplo: editala con tu testeo real o eliminala.",price:699,cost:150,ship:180,codUsd:1.5,platUsd:1,other:15,ads:150,impr:42000,clicks:980,visits:820,orders:32,shipPct:75,expDel:70,aov:850,example:true}}
+function example(){return{...blank(),name:"Producto de ejemplo",notes:"Ficha de ejemplo: editala con tu producto real o eliminala.",price:699,cost:150,ship:180,codUsd:1.5,platUsd:1,other:15,ads:150,impr:42000,clicks:980,visits:820,orders:32,shipPct:75,expDel:70,aov:850,example:true}}
 
 renderAll(true);
 
@@ -1034,6 +1348,10 @@ if(MODE==="public"){
   (async()=>{
     try{st.dl=window.claude&&window.claude.use?await window.claude.use("downloads"):null}catch(e){st.dl=null}
     if(!st.dl){$("#btnXls").hidden=true}
+  })();
+  (async()=>{
+    try{st.sample=window.claude&&window.claude.use?await window.claude.use("sample"):null}catch(e){st.sample=null}
+    if(st.sample){try{const L=await st.sample.limits();st.sampleImg=!!(L&&L.images)}catch(e){st.sampleImg=false}}
   })();
   (async()=>{
     let db=null;
